@@ -1,0 +1,40 @@
+{
+  "capabilities": {
+    "portMappings": true
+  },
+  "cniVersion": "0.4.0",
+  "name": "podman",
+  "prevResult": {
+    "cniVersion": "0.4.0",
+    "interfaces": [
+      {
+        "name": "cni-podman0",
+        "mac": "c6:af:d9:de:29:82"
+      },
+      {
+        "name": "vethfb85f49b",
+        "mac": "7a:ab:ed:a3:39:b1"
+      },
+      {
+        "name": "dummy0",
+        "mac": "1a:9a:f0:fe:90:4a",
+        "sandbox": "/var/run/netns/cni-196ac480-9f0e-3bd7-8f9b-e4a602251bd7"
+      }
+    ],
+    "ips": [
+      {
+        "version": "4",
+        "interface": 2,
+        "address": "10.88.0.5/16",
+        "gateway": "10.88.0.1"
+      }
+    ],
+    "routes": [
+      {
+        "dst": "0.0.0.0/0"
+      }
+    ],
+    "dns": {}
+  },
+  "type": "cni-nftables-portmap"
+}

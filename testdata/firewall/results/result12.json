@@ -1,0 +1,21 @@
+{
+  "name": "test",
+  "type": "firewall",
+  "backend": "nftables",
+  "ifName": "dummy0",
+  "cniVersion": "0.4.0",
+  "prevResult": {
+    "interfaces": [
+      {
+        "name": "dummy0"
+      }
+    ],
+    "ips": [
+      {
+        "version": "4",
+        "address": "192.168.100.100/24",
+        "interface": 0
+      }
+    ]
+  }
+}
