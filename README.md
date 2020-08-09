@@ -17,12 +17,25 @@ This repository contains the following plugins:
 
 ## Getting Started
 
-The plugins assume the following:
+### cni-nftables-firewall
 
-* `nftables` are operational
-* the `filter` table (or the one specified by `filter_table_name`) exist
-* the `FORWARD` chain (or the one specified by `forward_chain_name`)
-  in the `filter` tables exist
+The `cni-nftables-firewall` plugin performs the following steps upon
+the "add" operation.
+
+1. If `filter` table (or the one specified by `filter_table_name`) does not
+  exist, it creates it.
+2. If the `forward` chain (or the one specified by `forward_chain_name`)
+  in the `filter` table does not exist, it creates it.
+
+### cni-nftables-portmap
+
+The `cni-nftables-portmap` plugin performs the following steps upon
+the "add" operation.
+
+1. If `nat` table (or the one specified by `nat_table_name`) does not
+   exist, it creates it.
+2. If the `postrouting` chain (or the one specified by `postrouting_chain_name`)
+  in the `nat` table does not exist, it creates it.
 
 ## Plugin Development
 
@@ -49,7 +62,7 @@ NAME     VERSION   PLUGINS
 podman   0.4.0     bridge,cni-nftables-portmap,cni-nftables-firewall
 ```
 
-#### firewall
+#### cni-nftables-firewall
 
 The following command tests `firewall` plugin by placing
 a container in `podman` network and quering AWS Check IP
@@ -59,7 +72,7 @@ website:
 podman run --net=podman -it nicolaka/netshoot curl http://checkip.amazonaws.com/
 ```
 
-#### portmap
+#### cni-nftables-portmap
 
 The following command tests `portmap` plugin by placing
 a container in `podman` network and exposing a web server
