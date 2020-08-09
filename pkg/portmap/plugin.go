@@ -20,6 +20,7 @@ type Plugin struct {
 	supportedVersions    []string
 	natTableName         string
 	postRoutingChainName string
+	preRoutingChainName  string
 	ns                   netns.NsHandle
 	targetInterfaces     map[string]*Interface
 	targetIPVersions     map[string]bool
@@ -33,6 +34,7 @@ func NewPlugin(conf *Config) *Plugin {
 		supportedVersions:    supportedVersions,
 		natTableName:         conf.NatTableName,
 		postRoutingChainName: conf.PostRoutingChainName,
+		preRoutingChainName:  conf.PreRoutingChainName,
 		targetIPVersions:     make(map[string]bool),
 	}
 }

@@ -31,6 +31,7 @@ type Config struct {
 
 	NatTableName         string `json:"nat_table_name"`
 	PostRoutingChainName string `json:"postrouting_chain_name"`
+	PreRoutingChainName  string `json:"prerouting_chain_name"`
 }
 
 // MappingEntry holds the port mapping configuration.
@@ -55,14 +56,15 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 		return nil, nil, fmt.Errorf("unsupported CNI version %s", conf.CNIVersion)
 	}
 
-	// Default the nat table name to nat
+	// Set default values
 	if conf.NatTableName == "" {
 		conf.NatTableName = "nat"
 	}
-
-	// Default the postrouting chain name to postrouting
 	if conf.PostRoutingChainName == "" {
 		conf.PostRoutingChainName = "postrouting"
+	}
+	if conf.PreRoutingChainName == "" {
+		conf.PreRoutingChainName = "prerouting"
 	}
 
 	// Parse previous result.
