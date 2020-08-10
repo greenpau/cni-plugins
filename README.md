@@ -15,6 +15,20 @@ This repository contains the following plugins:
 * `cni-nftables-portmap`: port mapping with `nftables`
 * `cni-nftables-firewall`: firewalling with `nftables`
 
+<!-- begin-markdown-toc -->
+## Table of Contents
+
+* [Getting Started](#getting-started)
+  * [cni-nftables-firewall](#cninftablesfirewall)
+  * [cni-nftables-portmap](#cninftablesportmap)
+* [Plugin Development](#plugin-development)
+  * [Overview](#overview)
+  * [Integration Testing](#integration-testing)
+    * [cni-nftables-firewall](#cninftablesfirewall-1)
+    * [cni-nftables-portmap](#cninftablesportmap-1)
+
+<!-- end-markdown-toc -->
+
 ## Getting Started
 
 ### cni-nftables-firewall
