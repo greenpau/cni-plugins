@@ -17,16 +17,21 @@ func EncodeInterfaceName(s string) []byte {
 
 // GetChainName returns nftables chain name based
 // on the provided namespace and interface.
+<<<<<<< HEAD
 func GetChainName(containerID, nsID, intf string) string {
 	name := "cni" + nsID + intf
 	name = strings.ReplaceAll(name, "(", "-")
 	name = strings.ReplaceAll(name, ")", "-")
 	name = strings.ReplaceAll(name, ":", "-")
 	name = name + "-" + containerID
+=======
+func GetChainName(prefix, containerID string) string {
+>>>>>>> portmap
 	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
 	if err != nil {
 		return containerID
 	}
+<<<<<<< HEAD
 	name = reg.ReplaceAllString(name, "")
 	//if len(name) < 32 {
 	if len(name) < 29 {
@@ -35,6 +40,24 @@ func GetChainName(containerID, nsID, intf string) string {
 	//name = name[len(name)-31:]
 	name = "cni" + name[len(name)-28:]
 	return name
+=======
+	containerID = reg.ReplaceAllString(containerID, "")
+	name := "cni-" + prefix + "-"
+	offset := 31 - len(name)
+	if len(containerID) < offset {
+		return name + containerID
+	}
+	name += containerID[len(containerID)-offset:]
+	return name
+
+	/*
+		if len(name) < 29 {
+			return name
+		}
+		name = "cni" + name[len(name)-28:]
+		return name
+	*/
+>>>>>>> portmap
 }
 
 // LoadDataFromFilePath returns the content of a file

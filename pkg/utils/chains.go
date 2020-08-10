@@ -80,6 +80,42 @@ func CreateNatPostRoutingChain(v, tableName, chainName string) error {
 	return nil
 }
 
+<<<<<<< HEAD
+=======
+// CreateNatPreRoutingChain creates a prerouting chain in nat table.
+func CreateNatPreRoutingChain(v, tableName, chainName string) error {
+	if err := isSupportedIPVersion(v); err != nil {
+		return err
+	}
+
+	conn, err := initNftConn()
+	if err != nil {
+		return err
+	}
+
+	tb := &nftables.Table{
+		Name: tableName,
+	}
+	if v == "4" {
+		tb.Family = nftables.TableFamilyIPv4
+	} else {
+		tb.Family = nftables.TableFamilyIPv6
+	}
+	ch := &nftables.Chain{
+		Name:     chainName,
+		Table:    tb,
+		Type:     nftables.ChainTypeNAT,
+		Hooknum:  nftables.ChainHookPrerouting,
+		Priority: nftables.ChainPriorityNATDest,
+	}
+	conn.AddChain(ch)
+	if err = conn.Flush(); err != nil {
+		return err
+	}
+	return nil
+}
+
+>>>>>>> portmap
 // CreateChain creates a new chain in a table.
 func CreateChain(v, tableName, chainName string) error {
 	if err := isSupportedIPVersion(v); err != nil {

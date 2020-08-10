@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/greenpau/cni-plugins/pkg/utils"
+<<<<<<< HEAD
 	"github.com/vishvananda/netns"
+=======
+>>>>>>> portmap
 )
 
 // Interface represents a collection of addresses
@@ -20,7 +23,10 @@ type Plugin struct {
 	supportedVersions []string
 	filterTableName   string
 	forwardChainName  string
+<<<<<<< HEAD
 	ns                netns.NsHandle
+=======
+>>>>>>> portmap
 	interfaceChain    []string
 	targetInterfaces  map[string]*Interface
 	targetIPVersions  map[string]bool
@@ -92,7 +98,11 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			bridgeIntfName := p.interfaceChain[0]
+<<<<<<< HEAD
 			chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), bridgeIntfName)
+=======
+			chainName := utils.GetChainName("ffw", conf.ContainerID)
+>>>>>>> portmap
 			exists, err := utils.IsChainExists(addr.Version, p.filterTableName, chainName)
 			if err != nil {
 				return fmt.Errorf(
@@ -172,9 +182,15 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
+<<<<<<< HEAD
 	for intfName, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), intfName)
+=======
+	for _, targetInterface := range p.targetInterfaces {
+		for _, addr := range targetInterface.addrs {
+			chainName := utils.GetChainName("ffw", conf.ContainerID)
+>>>>>>> portmap
 			exists, err := utils.IsChainExists(addr.Version, p.filterTableName, chainName)
 			if err != nil {
 				return fmt.Errorf(
@@ -214,12 +230,20 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 			)
 		}
 		if exists {
+<<<<<<< HEAD
 			for intfName, targetInterface := range p.targetInterfaces {
+=======
+			for _, targetInterface := range p.targetInterfaces {
+>>>>>>> portmap
 				for _, addr := range targetInterface.addrs {
 					if v != addr.Version {
 						continue
 					}
+<<<<<<< HEAD
 					chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), intfName)
+=======
+					chainName := utils.GetChainName("ffw", conf.ContainerID)
+>>>>>>> portmap
 					//utils.DeleteJumpRule(addr.Version, p.filterTableName, p.forwardChainName, chainName)
 					if err := utils.DeleteJumpRule(addr.Version, p.filterTableName, p.forwardChainName, chainName); err != nil {
 						return err
@@ -229,9 +253,15 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
+<<<<<<< HEAD
 	for intfName, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), intfName)
+=======
+	for _, targetInterface := range p.targetInterfaces {
+		for _, addr := range targetInterface.addrs {
+			chainName := utils.GetChainName("ffw", conf.ContainerID)
+>>>>>>> portmap
 			exists, err := utils.IsChainExists(addr.Version, p.filterTableName, chainName)
 			if err != nil {
 				continue

@@ -110,6 +110,7 @@ func TestPlugin(t *testing.T) {
 				if err != nil {
 					return err
 				}
+<<<<<<< HEAD
 
 				err = testutils.CmdDelWithArgs(args, func() error {
 					return Delete(args)
@@ -117,6 +118,16 @@ func TestPlugin(t *testing.T) {
 				if err != nil {
 					return err
 				}
+=======
+				/*
+					err = testutils.CmdDelWithArgs(args, func() error {
+						return Delete(args)
+					})
+					if err != nil {
+						return err
+					}
+				*/
+>>>>>>> portmap
 				return nil
 			})
 

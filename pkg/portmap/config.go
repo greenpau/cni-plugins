@@ -7,6 +7,10 @@ import (
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/containernetworking/cni/pkg/version"
 	// "github.com/davecgh/go-spew/spew"
+<<<<<<< HEAD
+=======
+	"github.com/greenpau/cni-plugins/pkg/utils"
+>>>>>>> portmap
 
 	"net"
 )
@@ -20,7 +24,11 @@ type Config struct {
 	MarkMasqBit          *int      `json:"markMasqBit"`
 	ExternalSetMarkChain *string   `json:"externalSetMarkChain"`
 	RuntimeConfig        struct {
+<<<<<<< HEAD
 		PortMaps []MappingEntry `json:"portMappings,omitempty"`
+=======
+		PortMaps []utils.MappingEntry `json:"portMappings,omitempty"`
+>>>>>>> portmap
 	} `json:"runtimeConfig,omitempty"`
 
 	// These are fields parsed out of the config or the environment;
@@ -35,12 +43,20 @@ type Config struct {
 }
 
 // MappingEntry holds the port mapping configuration.
+<<<<<<< HEAD
+=======
+/*
+>>>>>>> portmap
 type MappingEntry struct {
 	HostPort      int    `json:"hostPort"`
 	ContainerPort int    `json:"containerPort"`
 	Protocol      string `json:"protocol"`
 	HostIP        string `json:"hostIP,omitempty"`
 }
+<<<<<<< HEAD
+=======
+*/
+>>>>>>> portmap
 
 // DefaultMarkBit is the default mark bit to signal that
 // masquerading is required.
@@ -109,8 +125,11 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 		}
 	}
 
+<<<<<<< HEAD
 	//return nil, nil, fmt.Errorf("PARSE: %s", spew.Sdump(conf, result))
 
+=======
+>>>>>>> portmap
 	if conf.PrevResult != nil {
 		for _, ip := range result.IPs {
 			if ip.Version == "6" && conf.ContIPv6.IP != nil {

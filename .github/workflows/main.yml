@@ -4,10 +4,17 @@ name: build
 on:
   push:
     branches:
+<<<<<<< HEAD
     - master
   pull_request:
     branches:
     - master
+=======
+    - main
+  pull_request:
+    branches:
+    - main
+>>>>>>> portmap
 
 jobs:
   core:
@@ -56,7 +63,16 @@ jobs:
     - name: Generate coverage report
       run: make coverage
     - name: Upload coverage report
+<<<<<<< HEAD
       uses: actions/upload-artifact@v1
       with:
         name: Test Coverage Report
         path: .coverage/coverage.html
+=======
+      uses: actions/upload-artifact@v2
+      with:
+        name: Upload coverage report
+        path: |
+          .coverage/**/*.html
+          .coverage/**/*.out
+>>>>>>> portmap

@@ -6,11 +6,19 @@ BUILD_USER:=$(shell whoami)
 BUILD_DATE:=$(shell date +"%Y-%m-%d")
 BUILD_GOOS:=$(shell go version | cut -d" " -f4 | cut -d"/" -f1)
 BUILD_GOARCH:=$(shell go version| cut -d" " -f4 | cut -d"/" -f2)
+<<<<<<< HEAD
 PLUGIN_PKGS:="firewall" "portmap"
 #PLUGIN_PKGS:="portmap"
 #PLUGIN_PKGS:="firewall"
 PLUGINS:="cni-nftables-firewall" "cni-nftables-portmap"
 #PLUGINS:="cni-nftables-portmap"
+=======
+#PLUGIN_PKGS:="firewall" "portmap"
+PLUGIN_PKGS:="portmap"
+#PLUGIN_PKGS:="firewall"
+#PLUGINS:="cni-nftables-firewall" "cni-nftables-portmap"
+PLUGINS:="cni-nftables-portmap"
+>>>>>>> portmap
 #PLUGINS:="cni-nftables-firewall"
 VERBOSE:=-v
 ifdef TEST
@@ -71,7 +79,12 @@ test: linter
 		go test -c $(VERBOSE) -coverprofile=.coverage/pkg/$${PKG}/coverage.out ./pkg/$${PKG};\
 		mv ./$${PKG}.test ./pkg/$${PKG}/$${PKG}.test;\
 		chmod +x ./pkg/$${PKG}/$${PKG}.test;\
+<<<<<<< HEAD
 		sudo ./pkg/$${PKG}/$${PKG}.test -test.v -test.testlogfile ./.coverage/pkg/$${PKG}/test.log -test.outputdir ./.coverage/pkg/$${PKG}/;\
+=======
+		sudo ./pkg/$${PKG}/$${PKG}.test -test.v -test.testlogfile ./.coverage/pkg/$${PKG}/test.log \
+			-test.coverprofile ./.coverage/pkg/$${PKG}/$${PKG}_coverage.out;\
+>>>>>>> portmap
 	done
 
 ctest: covdir linter
@@ -86,9 +99,14 @@ coverage:
 	@#go tool cover -help
 	@for PKG in $(PLUGIN_PKGS);do\
 		echo "Creating coverage for $${PKG}";\
+<<<<<<< HEAD
 		go tool cover -html=.coverage/pkg/$${PKG}/coverage.out -o .coverage/pkg/$${PKG}/coverage.html;\
 		go test -covermode=count -coverprofile=.coverage/pkg/$${PKG}/coverage.out ./pkg/$${PKG}/*.go;\
 		go tool cover -func=.coverage/pkg/$${PKG}/coverage.out | grep -v "100.0";\
+=======
+		go tool cover -html=.coverage/pkg/$${PKG}/$${PKG}_coverage.out -o .coverage/pkg/$${PKG}/$${PKG}_coverage.html;\
+		go tool cover -func=.coverage/pkg/$${PKG}/$${PKG}_coverage.out | grep -v "100.0";\
+>>>>>>> portmap
 	done
 
 clean:

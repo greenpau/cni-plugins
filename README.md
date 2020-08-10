@@ -15,6 +15,23 @@ This repository contains the following plugins:
 * `cni-nftables-portmap`: port mapping with `nftables`
 * `cni-nftables-firewall`: firewalling with `nftables`
 
+<<<<<<< HEAD
+=======
+<!-- begin-markdown-toc -->
+## Table of Contents
+
+* [Getting Started](#getting-started)
+  * [cni-nftables-firewall](#cninftablesfirewall)
+  * [cni-nftables-portmap](#cninftablesportmap)
+* [Plugin Development](#plugin-development)
+  * [Overview](#overview)
+  * [Integration Testing](#integration-testing)
+    * [cni-nftables-firewall](#cninftablesfirewall-1)
+    * [cni-nftables-portmap](#cninftablesportmap-1)
+
+<!-- end-markdown-toc -->
+
+>>>>>>> portmap
 ## Getting Started
 
 ### cni-nftables-firewall
@@ -34,7 +51,13 @@ the "add" operation.
 
 1. If `nat` table (or the one specified by `nat_table_name`) does not
    exist, it creates it.
+<<<<<<< HEAD
 2. If the `postrouting` chain (or the one specified by `postrouting_chain_name`)
+=======
+1. If the `postrouting` chain (or the one specified by `postrouting_chain_name`)
+  in the `nat` table does not exist, it creates it.
+1. If the `prerouting` chain (or the one specified by `prerouting_chain_name`)
+>>>>>>> portmap
   in the `nat` table does not exist, it creates it.
 
 ## Plugin Development

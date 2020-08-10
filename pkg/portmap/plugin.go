@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/greenpau/cni-plugins/pkg/utils"
+<<<<<<< HEAD
 	"github.com/vishvananda/netns"
+=======
+>>>>>>> portmap
 )
 
 // Interface represents a collection of addresses
@@ -21,7 +24,10 @@ type Plugin struct {
 	natTableName         string
 	postRoutingChainName string
 	preRoutingChainName  string
+<<<<<<< HEAD
 	ns                   netns.NsHandle
+=======
+>>>>>>> portmap
 	targetInterfaces     map[string]*Interface
 	targetIPVersions     map[string]bool
 }
@@ -63,6 +69,7 @@ func (p *Plugin) Delete(conf *Config, result *current.Result) error {
 	return nil
 }
 
+<<<<<<< HEAD
 /*
 		conf
 
@@ -127,6 +134,8 @@ func (p *Plugin) Delete(conf *Config, result *current.Result) error {
 
 */
 
+=======
+>>>>>>> portmap
 func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	if err := p.validateInput(conf, prevResult); err != nil {
 		return fmt.Errorf("failed validating input: %s", err)
@@ -151,11 +160,27 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				return fmt.Errorf("failed creating ipv%s postrouting chain: %s", v, err)
 			}
 		}
+<<<<<<< HEAD
+=======
+		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingChainName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s prerouting chain info: %s", v, err)
+		}
+		if !exists {
+			if err := utils.CreateNatPreRoutingChain(v, p.natTableName, p.preRoutingChainName); err != nil {
+				return fmt.Errorf("failed creating ipv%s prerouting chain: %s", v, err)
+			}
+		}
+>>>>>>> portmap
 	}
 
 	for intfName, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
+<<<<<<< HEAD
 			chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), intfName)
+=======
+			chainName := utils.GetChainName("npo", conf.ContainerID)
+>>>>>>> portmap
 			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
 			if err != nil {
 				return fmt.Errorf(
@@ -203,6 +228,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	}
 
 	/*
+<<<<<<< HEAD
 			conf looks as follows
 
 		    NetConf: (types.NetConf) {
@@ -276,6 +302,37 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 			}
 		}
 	*/
+=======
+	   RuntimeConfig: (struct { PortMaps []portmap.MappingEntry "json:\"portMappings,omitempty\"" }) {
+	    PortMaps: ([]portmap.MappingEntry) (len=1 cap=4) {
+	     (portmap.MappingEntry) {
+	      HostPort: (int) 46063,
+	      ContainerPort: (int) 80,
+	      Protocol: (string) (len=3) "tcp",
+	      HostIP: (string) ""
+	     }
+	    }
+	   },
+	   ContIPv4: (net.IPNet) 10.88.0.7/16,
+	   ContIPv6: (net.IPNet) <nil>
+	*/
+
+	if len(conf.RuntimeConfig.PortMaps) > 0 {
+		if err := utils.AddDestinationNatRules(
+			p.natTableName,
+			p.preRoutingChainName,
+			conf.ContIPv4,
+			conf.ContIPv6,
+			conf.RuntimeConfig.PortMaps,
+		); err != nil {
+			return fmt.Errorf(
+				"failed creating destination NAT rules in %s chain of %s table for %v: %s",
+				p.preRoutingChainName, p.natTableName, conf.RuntimeConfig.PortMaps, err,
+			)
+		}
+	}
+
+>>>>>>> portmap
 	return nil
 }
 
@@ -305,6 +362,22 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 				v, p.postRoutingChainName, p.natTableName,
 			)
 		}
+<<<<<<< HEAD
+=======
+		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining ipv%s prerouting chain %s info: %s",
+				v, p.preRoutingChainName, err,
+			)
+		}
+		if !exists {
+			return fmt.Errorf(
+				"ipv%s chain %s in nat table %s does not exist",
+				v, p.preRoutingChainName, p.natTableName,
+			)
+		}
+>>>>>>> portmap
 	}
 
 	return nil
@@ -331,12 +404,20 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 			)
 		}
 		if exists {
+<<<<<<< HEAD
 			for intfName, targetInterface := range p.targetInterfaces {
+=======
+			for _, targetInterface := range p.targetInterfaces {
+>>>>>>> portmap
 				for _, addr := range targetInterface.addrs {
 					if v != addr.Version {
 						continue
 					}
+<<<<<<< HEAD
 					chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), intfName)
+=======
+					chainName := utils.GetChainName("npo", conf.ContainerID)
+>>>>>>> portmap
 					if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.postRoutingChainName, chainName); err != nil {
 						return err
 					}
@@ -345,9 +426,15 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
+<<<<<<< HEAD
 	for intfName, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName(conf.ContainerID, p.ns.UniqueId(), intfName)
+=======
+	for _, targetInterface := range p.targetInterfaces {
+		for _, addr := range targetInterface.addrs {
+			chainName := utils.GetChainName("npo", conf.ContainerID)
+>>>>>>> portmap
 			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
 			if err != nil {
 				continue
