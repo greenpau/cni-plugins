@@ -100,10 +100,14 @@ First, start the container:
 podman run --net=podman -P -d nginxdemos/hello
 ```
 
-Next, attach to the container:
+Alternatively, map the container port to port `8080`:
 
+```bash
+podman run --net=podman -p 8080:80/tcp -d nginxdemos/hello
 ```
-podman exec -it <Container ID> /bin/bash
+
+Verify connectivity to the container:
+
+```bash
+curl -v http://127.0.0.1:8080
 ```
-
-
