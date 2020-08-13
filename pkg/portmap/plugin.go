@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/greenpau/cni-plugins/pkg/utils"
+	"net"
 )
 
 // Interface represents a collection of addresses
@@ -145,6 +146,74 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
+	for _, targetInterface := range p.targetInterfaces {
+		for _, addr := range targetInterface.addrs {
+			chainName := utils.GetChainName("npr", conf.ContainerID)
+			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
+			if err != nil {
+				return fmt.Errorf(
+					"failed obtaining ipv%s prerouting %s chain info: %s",
+					addr.Version, chainName, err,
+				)
+			}
+			if !exists {
+				if err := utils.CreateChain(
+					addr.Version,
+					p.natTableName,
+					chainName,
+				); err != nil {
+					return fmt.Errorf(
+						"failed creating ipv%s prerouting %s chain: %s",
+						addr.Version, chainName, err,
+					)
+				}
+			}
+			if len(conf.RuntimeConfig.PortMaps) == 0 {
+				continue
+			}
+			if addr.Version == "4" && conf.ContIPv4.String() == "" {
+				continue
+			}
+			if addr.Version == "6" && conf.ContIPv6.String() == "" {
+				continue
+			}
+			if err := utils.CreateJumpRule(
+				addr.Version,
+				p.natTableName,
+				p.preRoutingChainName,
+				chainName,
+			); err != nil {
+				return fmt.Errorf(
+					"failed creating jump rule to ipv%s prerouting %s chain: %s",
+					addr.Version, chainName, err,
+				)
+			}
+
+			var destAddr net.IPNet
+			if addr.Version == "4" {
+				destAddr = conf.ContIPv4
+			} else {
+				destAddr = conf.ContIPv6
+			}
+
+			for _, pm := range conf.RuntimeConfig.PortMaps {
+				if err := utils.AddDestinationNatRules(
+					addr.Version,
+					p.natTableName,
+					chainName,
+					destAddr,
+					pm,
+				); err != nil {
+					return fmt.Errorf(
+						"failed creating destination NAT rules in %s chain of %s table for %v: %s",
+						chainName, p.natTableName, pm, err,
+					)
+				}
+			}
+
+		}
+	}
+
 	/*
 	   RuntimeConfig: (struct { PortMaps []portmap.MappingEntry "json:\"portMappings,omitempty\"" }) {
 	    PortMaps: ([]portmap.MappingEntry) (len=1 cap=4) {
@@ -159,21 +228,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	   ContIPv4: (net.IPNet) 10.88.0.7/16,
 	   ContIPv6: (net.IPNet) <nil>
 	*/
-
-	if len(conf.RuntimeConfig.PortMaps) > 0 {
-		if err := utils.AddDestinationNatRules(
-			p.natTableName,
-			p.preRoutingChainName,
-			conf.ContIPv4,
-			conf.ContIPv6,
-			conf.RuntimeConfig.PortMaps,
-		); err != nil {
-			return fmt.Errorf(
-				"failed creating destination NAT rules in %s chain of %s table for %v: %s",
-				p.preRoutingChainName, p.natTableName, conf.RuntimeConfig.PortMaps, err,
-			)
-		}
-	}
 
 	return nil
 }
