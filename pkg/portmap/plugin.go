@@ -21,6 +21,7 @@ type Plugin struct {
 	natTableName         string
 	postRoutingChainName string
 	preRoutingChainName  string
+	interfaceChain       []string
 	targetInterfaces     map[string]*Interface
 	targetIPVersions     map[string]bool
 }
@@ -35,6 +36,7 @@ func NewPlugin(conf *Config) *Plugin {
 		postRoutingChainName: conf.PostRoutingChainName,
 		preRoutingChainName:  conf.PreRoutingChainName,
 		targetIPVersions:     make(map[string]bool),
+		interfaceChain:       []string{},
 	}
 }
 
@@ -97,9 +99,10 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
-	for intfName, targetInterface := range p.targetInterfaces {
+	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName("npo", conf.ContainerID)
+			bridgeIntfName := p.interfaceChain[0]
 			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
 			if err != nil {
 				return fmt.Errorf(
@@ -136,7 +139,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				p.natTableName,
 				chainName,
 				addr,
-				intfName,
+				bridgeIntfName,
 			); err != nil {
 				return fmt.Errorf(
 					"failed creating postrouting rules in ipv%s %s chain of %s table: %s",
