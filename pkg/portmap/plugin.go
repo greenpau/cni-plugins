@@ -15,28 +15,32 @@ type Interface struct {
 
 // Plugin represents the nftables port-mapping CNI plugin.
 type Plugin struct {
-	name                 string
-	cniVersion           string
-	supportedVersions    []string
-	natTableName         string
-	postRoutingChainName string
-	preRoutingChainName  string
-	interfaceChain       []string
-	targetInterfaces     map[string]*Interface
-	targetIPVersions     map[string]bool
+	name                    string
+	cniVersion              string
+	supportedVersions       []string
+	natTableName            string
+	postRoutingNatChainName string
+	preRoutingNatChainName  string
+	outputNatChainName      string
+	inputNatChainName       string
+	interfaceChain          []string
+	targetInterfaces        map[string]*Interface
+	targetIPVersions        map[string]bool
 }
 
 // NewPlugin returns an instance of Plugin.
 func NewPlugin(conf *Config) *Plugin {
 	return &Plugin{
-		name:                 "cni-nftables-portmap",
-		cniVersion:           "0.4.0",
-		supportedVersions:    supportedVersions,
-		natTableName:         conf.NatTableName,
-		postRoutingChainName: conf.PostRoutingChainName,
-		preRoutingChainName:  conf.PreRoutingChainName,
-		targetIPVersions:     make(map[string]bool),
-		interfaceChain:       []string{},
+		name:                    "cni-nftables-portmap",
+		cniVersion:              "0.4.0",
+		supportedVersions:       supportedVersions,
+		natTableName:            conf.NatTableName,
+		postRoutingNatChainName: conf.PostRoutingNatChainName,
+		preRoutingNatChainName:  conf.PreRoutingNatChainName,
+		outputNatChainName:      conf.OutputNatChainName,
+		inputNatChainName:       conf.InputNatChainName,
+		targetIPVersions:        make(map[string]bool),
+		interfaceChain:          []string{},
 	}
 }
 
@@ -79,24 +83,46 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				return fmt.Errorf("failed creating ipv%s nat table: %s", v, err)
 			}
 		}
-		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingChainName)
+		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s postrouting chain info: %s", v, err)
 		}
 		if !exists {
-			if err := utils.CreateNatPostRoutingChain(v, p.natTableName, p.postRoutingChainName); err != nil {
+			if err := utils.CreateNatPostRoutingChain(v, p.natTableName, p.postRoutingNatChainName); err != nil {
 				return fmt.Errorf("failed creating ipv%s postrouting chain: %s", v, err)
 			}
 		}
-		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingChainName)
+
+		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s prerouting chain info: %s", v, err)
 		}
 		if !exists {
-			if err := utils.CreateNatPreRoutingChain(v, p.natTableName, p.preRoutingChainName); err != nil {
+			if err := utils.CreateNatPreRoutingChain(v, p.natTableName, p.preRoutingNatChainName); err != nil {
 				return fmt.Errorf("failed creating ipv%s prerouting chain: %s", v, err)
 			}
 		}
+
+		exists, err = utils.IsChainExists(v, p.natTableName, p.outputNatChainName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s output chain info: %s", v, err)
+		}
+		if !exists {
+			if err := utils.CreateNatOutputChain(v, p.natTableName, p.outputNatChainName); err != nil {
+				return fmt.Errorf("failed creating ipv%s output chain: %s", v, err)
+			}
+		}
+
+		exists, err = utils.IsChainExists(v, p.natTableName, p.inputNatChainName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s input chain info: %s", v, err)
+		}
+		if !exists {
+			if err := utils.CreateNatInputChain(v, p.natTableName, p.inputNatChainName); err != nil {
+				return fmt.Errorf("failed creating ipv%s input chain: %s", v, err)
+			}
+		}
+
 	}
 
 	for _, targetInterface := range p.targetInterfaces {
@@ -125,7 +151,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 			if err := utils.CreateJumpRule(
 				addr.Version,
 				p.natTableName,
-				p.postRoutingChainName,
+				p.postRoutingNatChainName,
 				chainName,
 			); err != nil {
 				return fmt.Errorf(
@@ -183,11 +209,11 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 			if err := utils.CreateJumpRule(
 				addr.Version,
 				p.natTableName,
-				p.preRoutingChainName,
+				p.preRoutingNatChainName,
 				chainName,
 			); err != nil {
 				return fmt.Errorf(
-					"failed creating jump rule to ipv%s prerouting %s chain: %s",
+					"failed creating jump rule from ipv%s prerouting %s chain: %s",
 					addr.Version, chainName, err,
 				)
 			}
@@ -248,32 +274,61 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 		if !exists {
 			return fmt.Errorf("ipv%s nat table %s does not exist", v, p.natTableName)
 		}
-		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingChainName)
+		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf(
 				"failed obtaining ipv%s postrouting chain %s info: %s",
-				v, p.postRoutingChainName, err,
+				v, p.postRoutingNatChainName, err,
 			)
 		}
 		if !exists {
 			return fmt.Errorf(
 				"ipv%s chain %s in nat table %s does not exist",
-				v, p.postRoutingChainName, p.natTableName,
+				v, p.postRoutingNatChainName, p.natTableName,
 			)
 		}
-		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingChainName)
+		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf(
 				"failed obtaining ipv%s prerouting chain %s info: %s",
-				v, p.preRoutingChainName, err,
+				v, p.preRoutingNatChainName, err,
 			)
 		}
 		if !exists {
 			return fmt.Errorf(
 				"ipv%s chain %s in nat table %s does not exist",
-				v, p.preRoutingChainName, p.natTableName,
+				v, p.preRoutingNatChainName, p.natTableName,
 			)
 		}
+
+		exists, err = utils.IsChainExists(v, p.natTableName, p.outputNatChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining ipv%s output chain %s info: %s",
+				v, p.outputNatChainName, err,
+			)
+		}
+		if !exists {
+			return fmt.Errorf(
+				"ipv%s chain %s in nat table %s does not exist",
+				v, p.outputNatChainName, p.natTableName,
+			)
+		}
+
+		exists, err = utils.IsChainExists(v, p.natTableName, p.inputNatChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining ipv%s input chain %s info: %s",
+				v, p.inputNatChainName, err,
+			)
+		}
+		if !exists {
+			return fmt.Errorf(
+				"ipv%s chain %s in nat table %s does not exist",
+				v, p.inputNatChainName, p.natTableName,
+			)
+		}
+
 	}
 
 	return nil
@@ -292,11 +347,11 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 		if !exists {
 			continue
 		}
-		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingChainName)
+		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf(
 				"failed obtaining ipv%s postrouting chain %s info: %s",
-				v, p.postRoutingChainName, err,
+				v, p.postRoutingNatChainName, err,
 			)
 		}
 		if exists {
@@ -306,7 +361,7 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 						continue
 					}
 					chainName := utils.GetChainName("npo", conf.ContainerID)
-					if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.postRoutingChainName, chainName); err != nil {
+					if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, chainName); err != nil {
 						return err
 					}
 				}

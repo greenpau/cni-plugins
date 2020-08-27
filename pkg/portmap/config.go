@@ -30,9 +30,11 @@ type Config struct {
 	ContIPv4    net.IPNet `json:"-"`
 	ContIPv6    net.IPNet `json:"-"`
 
-	NatTableName         string `json:"nat_table_name"`
-	PostRoutingChainName string `json:"postrouting_chain_name"`
-	PreRoutingChainName  string `json:"prerouting_chain_name"`
+	NatTableName            string `json:"nat_table_name"`
+	PostRoutingNatChainName string `json:"postrouting_nat_chain_name"`
+	PreRoutingNatChainName  string `json:"prerouting_nat_chain_name"`
+	OutputNatChainName      string `json:"output_nat_chain_name"`
+	InputNatChainName       string `json:"input_nat_chain_name"`
 }
 
 // MappingEntry holds the port mapping configuration.
@@ -63,11 +65,18 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 	if conf.NatTableName == "" {
 		conf.NatTableName = "nat"
 	}
-	if conf.PostRoutingChainName == "" {
-		conf.PostRoutingChainName = "postrouting"
+	if conf.PostRoutingNatChainName == "" {
+		conf.PostRoutingNatChainName = "postrouting"
 	}
-	if conf.PreRoutingChainName == "" {
-		conf.PreRoutingChainName = "prerouting"
+	if conf.PreRoutingNatChainName == "" {
+		conf.PreRoutingNatChainName = "prerouting"
+	}
+	if conf.OutputNatChainName == "" {
+		conf.OutputNatChainName = "output"
+	}
+
+	if conf.InputNatChainName == "" {
+		conf.InputNatChainName = "input"
 	}
 
 	// Parse previous result.
