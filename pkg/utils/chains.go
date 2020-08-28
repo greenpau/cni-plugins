@@ -52,7 +52,7 @@ func IsChainExists(v, tableName, chainName string) (bool, error) {
 // NF_INET_POST_ROUTING: this hook in the ipfinishoutput() function
 // before they leave the computer.
 func CreateNatPostRoutingChain(v, tableName, chainName string) error {
-	return CreateNatChain(v, tableName, chainName, "nat", "postrouting", "snat")
+	return CreateChain(v, tableName, chainName, "nat", "postrouting", "snat")
 }
 
 // CreateNatPreRoutingChain creates a prerouting chain in nat table.
@@ -61,7 +61,7 @@ func CreateNatPostRoutingChain(v, tableName, chainName string) error {
 // (linux/net/ipv4/ip_input.c) function before they are processed
 // by the routing code.
 func CreateNatPreRoutingChain(v, tableName, chainName string) error {
-	return CreateNatChain(v, tableName, chainName, "nat", "prerouting", "dnat")
+	return CreateChain(v, tableName, chainName, "nat", "prerouting", "dnat")
 }
 
 // CreateNatOutputChain creates an output chain in nat table.
@@ -69,7 +69,7 @@ func CreateNatPreRoutingChain(v, tableName, chainName string) error {
 // NF_INET_LOCAL_OUT: all outgoing packets created in the local
 // computer pass this hook in the function ip_build_and_send_pkt().
 func CreateNatOutputChain(v, tableName, chainName string) error {
-	return CreateNatChain(v, tableName, chainName, "nat", "output", "dnat")
+	return CreateChain(v, tableName, chainName, "nat", "output", "dnat")
 }
 
 // CreateNatInputChain creates an input chain in nat table.
@@ -77,11 +77,16 @@ func CreateNatOutputChain(v, tableName, chainName string) error {
 // NF_INET_LOCAL_IN: all incoming packets addressed to the local
 // computer pass this hook in the function ip_local_deliver().
 func CreateNatInputChain(v, tableName, chainName string) error {
-	return CreateNatChain(v, tableName, chainName, "nat", "input", "snat")
+	return CreateChain(v, tableName, chainName, "nat", "input", "snat")
 }
 
-// CreateNatChain creates NAT chain of a specific type.
-func CreateNatChain(v, tableName, chainName, tableType, chainType, chainPriority string) error {
+// CreateRawPreRoutingChain creates a prerouting chain in raw table.
+func CreateRawPreRoutingChain(v, tableName, chainName string) error {
+	return CreateChain(v, tableName, chainName, "filter", "prerouting", "raw")
+}
+
+// CreateChain creates NAT chain of a specific type.
+func CreateChain(v, tableName, chainName, chainType, chainHookType, chainPriority string) error {
 	if err := isSupportedIPVersion(v); err != nil {
 		return err
 	}
@@ -105,14 +110,20 @@ func CreateNatChain(v, tableName, chainName, tableType, chainType, chainPriority
 		Table: tb,
 	}
 
-	switch tableType {
+	switch chainType {
 	case "nat":
 		ch.Type = nftables.ChainTypeNAT
+	case "filter":
+		ch.Type = nftables.ChainTypeFilter
+	case "route":
+		ch.Type = nftables.ChainTypeRoute
 	default:
-		return fmt.Errorf("unsupported table type: %s", tableType)
+		if chainType != "none" {
+			return fmt.Errorf("unsupported table type: %s", chainType)
+		}
 	}
 
-	switch chainType {
+	switch chainHookType {
 	case "input":
 		ch.Hooknum = nftables.ChainHookInput
 	case "forward":
@@ -124,7 +135,9 @@ func CreateNatChain(v, tableName, chainName, tableType, chainType, chainPriority
 	case "postrouting":
 		ch.Hooknum = nftables.ChainHookPostrouting
 	default:
-		return fmt.Errorf("unsupported chain type: %s", chainType)
+		if chainHookType != "none" {
+			return fmt.Errorf("unsupported chain type: %s", chainHookType)
+		}
 	}
 
 	switch chainPriority {
@@ -134,40 +147,14 @@ func CreateNatChain(v, tableName, chainName, tableType, chainType, chainPriority
 		ch.Priority = nftables.ChainPriorityNATSource
 	case "raw":
 		ch.Priority = nftables.ChainPriorityRaw
+	case "none":
+		// do nothing
 	default:
-		return fmt.Errorf("unsupported chain priority: %s", chainPriority)
+		if chainPriority != "none" {
+			return fmt.Errorf("unsupported chain priority: %s", chainPriority)
+		}
 	}
 
-	conn.AddChain(ch)
-	if err = conn.Flush(); err != nil {
-		return err
-	}
-	return nil
-}
-
-// CreateChain creates a new chain in a table.
-func CreateChain(v, tableName, chainName string) error {
-	if err := isSupportedIPVersion(v); err != nil {
-		return err
-	}
-
-	conn, err := initNftConn()
-	if err != nil {
-		return err
-	}
-
-	tb := &nftables.Table{
-		Name: tableName,
-	}
-	if v == "4" {
-		tb.Family = nftables.TableFamilyIPv4
-	} else {
-		tb.Family = nftables.TableFamilyIPv6
-	}
-	ch := &nftables.Chain{
-		Name:  chainName,
-		Table: tb,
-	}
 	conn.AddChain(ch)
 	if err = conn.Flush(); err != nil {
 		return err

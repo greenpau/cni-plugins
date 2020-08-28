@@ -35,6 +35,8 @@ type Config struct {
 	PreRoutingNatChainName  string `json:"prerouting_nat_chain_name"`
 	OutputNatChainName      string `json:"output_nat_chain_name"`
 	InputNatChainName       string `json:"input_nat_chain_name"`
+	RawTableName            string `json:"raw_table_name"`
+	PreRoutingRawChainName  string `json:"prerouting_raw_chain_name"`
 }
 
 // MappingEntry holds the port mapping configuration.
@@ -65,6 +67,9 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 	if conf.NatTableName == "" {
 		conf.NatTableName = "nat"
 	}
+	if conf.RawTableName == "" {
+		conf.RawTableName = "raw"
+	}
 	if conf.PostRoutingNatChainName == "" {
 		conf.PostRoutingNatChainName = "postrouting"
 	}
@@ -77,6 +82,13 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 
 	if conf.InputNatChainName == "" {
 		conf.InputNatChainName = "input"
+	}
+
+	if conf.RawTableName == "" {
+		conf.RawTableName = "raw"
+	}
+	if conf.PreRoutingRawChainName == "" {
+		conf.PreRoutingRawChainName = "prerouting"
 	}
 
 	// Parse previous result.

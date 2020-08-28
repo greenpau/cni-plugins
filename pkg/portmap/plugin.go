@@ -23,6 +23,8 @@ type Plugin struct {
 	preRoutingNatChainName  string
 	outputNatChainName      string
 	inputNatChainName       string
+	rawTableName            string
+	preRoutingRawChainName  string
 	interfaceChain          []string
 	targetInterfaces        map[string]*Interface
 	targetIPVersions        map[string]bool
@@ -39,6 +41,8 @@ func NewPlugin(conf *Config) *Plugin {
 		preRoutingNatChainName:  conf.PreRoutingNatChainName,
 		outputNatChainName:      conf.OutputNatChainName,
 		inputNatChainName:       conf.InputNatChainName,
+		rawTableName:            conf.RawTableName,
+		preRoutingRawChainName:  conf.PreRoutingRawChainName,
 		targetIPVersions:        make(map[string]bool),
 		interfaceChain:          []string{},
 	}
@@ -74,52 +78,107 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
+		// NAT Table and Chains Setup
 		exists, err := utils.IsTableExist(v, p.natTableName)
 		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s nat table info: %s", v, err)
+			return fmt.Errorf("failed obtaining ipv%s %s table info: %s", v, p.natTableName, err)
 		}
 		if !exists {
 			if err := utils.CreateTable(v, p.natTableName); err != nil {
 				return fmt.Errorf("failed creating ipv%s %s table: %s", v, p.natTableName, err)
 			}
 		}
+
 		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
 		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s postrouting chain info: %s", v, err)
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.postRoutingNatChainName, p.natTableName, err,
+			)
 		}
 		if !exists {
 			if err := utils.CreateNatPostRoutingChain(v, p.natTableName, p.postRoutingNatChainName); err != nil {
-				return fmt.Errorf("failed creating ipv%s postrouting chain: %s", v, err)
+				return fmt.Errorf(
+					"failed creating ipv%s %s chain in %s table: %s",
+					v, p.postRoutingNatChainName, p.natTableName, err,
+				)
 			}
 		}
 
 		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingNatChainName)
 		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s prerouting chain info: %s", v, err)
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.preRoutingNatChainName, p.natTableName, err,
+			)
 		}
 		if !exists {
 			if err := utils.CreateNatPreRoutingChain(v, p.natTableName, p.preRoutingNatChainName); err != nil {
-				return fmt.Errorf("failed creating ipv%s prerouting chain: %s", v, err)
+				return fmt.Errorf(
+					"failed creating ipv%s %s chain in %s table: %s",
+					v, p.preRoutingNatChainName, p.natTableName, err,
+				)
 			}
 		}
 
 		exists, err = utils.IsChainExists(v, p.natTableName, p.outputNatChainName)
 		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s output chain info: %s", v, err)
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.outputNatChainName, p.natTableName, err,
+			)
+
 		}
 		if !exists {
 			if err := utils.CreateNatOutputChain(v, p.natTableName, p.outputNatChainName); err != nil {
-				return fmt.Errorf("failed creating ipv%s output chain: %s", v, err)
+				return fmt.Errorf(
+					"failed creating ipv%s %s chain in %s table: %s",
+					v, p.outputNatChainName, p.natTableName, err,
+				)
 			}
 		}
 
 		exists, err = utils.IsChainExists(v, p.natTableName, p.inputNatChainName)
 		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s input chain info: %s", v, err)
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.inputNatChainName, p.natTableName, err,
+			)
 		}
 		if !exists {
 			if err := utils.CreateNatInputChain(v, p.natTableName, p.inputNatChainName); err != nil {
-				return fmt.Errorf("failed creating ipv%s input chain: %s", v, err)
+				return fmt.Errorf(
+					"failed creating ipv%s %s chain in %s table: %s",
+					v, p.inputNatChainName, p.natTableName, err,
+				)
+
+			}
+		}
+
+		// Raw Table and Chains Setup
+		exists, err = utils.IsTableExist(v, p.rawTableName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s %s table info: %s", v, p.rawTableName, err)
+		}
+		if !exists {
+			if err := utils.CreateTable(v, p.rawTableName); err != nil {
+				return fmt.Errorf("failed creating ipv%s %s table: %s", v, p.rawTableName, err)
+			}
+		}
+
+		exists, err = utils.IsChainExists(v, p.rawTableName, p.preRoutingRawChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.preRoutingRawChainName, p.rawTableName, err,
+			)
+		}
+		if !exists {
+			if err := utils.CreateRawPreRoutingChain(v, p.rawTableName, p.preRoutingRawChainName); err != nil {
+				return fmt.Errorf(
+					"failed creating ipv%s %s chain in %s table: %s",
+					v, p.preRoutingRawChainName, p.rawTableName, err,
+				)
 			}
 		}
 
@@ -141,6 +200,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					addr.Version,
 					p.natTableName,
 					chainName,
+					"none", "none", "none",
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating ipv%s postrouting %s chain: %s",
@@ -190,6 +250,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					addr.Version,
 					p.natTableName,
 					chainName,
+					"none", "none", "none",
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating ipv%s prerouting %s chain: %s",
@@ -267,36 +328,39 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
+		// Check NAT table
 		exists, err := utils.IsTableExist(v, p.natTableName)
 		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s nat table %s info: %s", v, p.natTableName, err)
+			return fmt.Errorf("failed obtaining ipv%s %s table info: %s", v, p.natTableName, err)
 		}
 		if !exists {
-			return fmt.Errorf("ipv%s nat table %s does not exist", v, p.natTableName)
+			return fmt.Errorf("ipv%s table %s does not exist", v, p.natTableName)
 		}
+
 		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf(
-				"failed obtaining ipv%s postrouting chain %s info: %s",
-				v, p.postRoutingNatChainName, err,
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.postRoutingNatChainName, p.natTableName, err,
 			)
 		}
 		if !exists {
 			return fmt.Errorf(
-				"ipv%s chain %s in nat table %s does not exist",
+				"ipv%s chain %s in %s table does not exist",
 				v, p.postRoutingNatChainName, p.natTableName,
 			)
 		}
+
 		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf(
-				"failed obtaining ipv%s prerouting chain %s info: %s",
-				v, p.preRoutingNatChainName, err,
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.preRoutingNatChainName, p.natTableName, err,
 			)
 		}
 		if !exists {
 			return fmt.Errorf(
-				"ipv%s chain %s in nat table %s does not exist",
+				"ipv%s chain %s in %s table does not exist",
 				v, p.preRoutingNatChainName, p.natTableName,
 			)
 		}
@@ -304,13 +368,13 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 		exists, err = utils.IsChainExists(v, p.natTableName, p.outputNatChainName)
 		if err != nil {
 			return fmt.Errorf(
-				"failed obtaining ipv%s output chain %s info: %s",
-				v, p.outputNatChainName, err,
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.outputNatChainName, p.natTableName, err,
 			)
 		}
 		if !exists {
 			return fmt.Errorf(
-				"ipv%s chain %s in nat table %s does not exist",
+				"ipv%s chain %s in %s table does not exist",
 				v, p.outputNatChainName, p.natTableName,
 			)
 		}
@@ -318,14 +382,37 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 		exists, err = utils.IsChainExists(v, p.natTableName, p.inputNatChainName)
 		if err != nil {
 			return fmt.Errorf(
-				"failed obtaining ipv%s input chain %s info: %s",
-				v, p.inputNatChainName, err,
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.inputNatChainName, p.natTableName, err,
 			)
 		}
 		if !exists {
 			return fmt.Errorf(
-				"ipv%s chain %s in nat table %s does not exist",
+				"ipv%s chain %s in %s table does not exist",
 				v, p.inputNatChainName, p.natTableName,
+			)
+		}
+
+		// Check Raw table
+		exists, err = utils.IsTableExist(v, p.rawTableName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s %s table info: %s", v, p.rawTableName, err)
+		}
+		if !exists {
+			return fmt.Errorf("ipv%s table %s does not exist", v, p.rawTableName)
+		}
+
+		exists, err = utils.IsChainExists(v, p.rawTableName, p.preRoutingRawChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.preRoutingRawChainName, p.rawTableName, err,
+			)
+		}
+		if !exists {
+			return fmt.Errorf(
+				"ipv%s chain %s in %s table does not exist",
+				v, p.preRoutingRawChainName, p.rawTableName,
 			)
 		}
 
