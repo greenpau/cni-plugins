@@ -74,13 +74,13 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsNatTableExist(v, p.natTableName)
+		exists, err := utils.IsTableExist(v, p.natTableName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s nat table info: %s", v, err)
 		}
 		if !exists {
-			if err := utils.CreateNatTable(v, p.natTableName); err != nil {
-				return fmt.Errorf("failed creating ipv%s nat table: %s", v, err)
+			if err := utils.CreateTable(v, p.natTableName); err != nil {
+				return fmt.Errorf("failed creating ipv%s %s table: %s", v, p.natTableName, err)
 			}
 		}
 		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
@@ -267,7 +267,7 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsNatTableExist(v, p.natTableName)
+		exists, err := utils.IsTableExist(v, p.natTableName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s nat table %s info: %s", v, p.natTableName, err)
 		}
@@ -340,7 +340,7 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsNatTableExist(v, p.natTableName)
+		exists, err := utils.IsTableExist(v, p.natTableName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s nat table %s info: %s", v, p.natTableName, err)
 		}

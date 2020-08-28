@@ -12,42 +12,19 @@ func isSupportedIPVersion(v string) error {
 	return nil
 }
 
-// IsFilterTableExist checks whether filter table exists.
-func IsFilterTableExist(v, tableName string) (bool, error) {
-	table, err := isTableExist(v, tableName)
-	if err != nil {
-		return false, err
-	}
-	if table != nil {
-		return true, nil
-	}
-	return false, nil
-}
-
-// IsNatTableExist checks whether nat table exists.
-func IsNatTableExist(v, tableName string) (bool, error) {
-	table, err := isTableExist(v, tableName)
-	if err != nil {
-		return false, err
-	}
-	if table != nil {
-		return true, nil
-	}
-	return false, nil
-}
-
-func isTableExist(v, tableName string) (*nftables.Table, error) {
+// IsTableExist checks whether a table exists
+func IsTableExist(v, tableName string) (bool, error) {
 	if err := isSupportedIPVersion(v); err != nil {
-		return nil, err
+		return false, err
 	}
 	conn, err := initNftConn()
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	tables, err := conn.ListTables()
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
 	for _, table := range tables {
@@ -66,23 +43,14 @@ func isTableExist(v, tableName string) (*nftables.Table, error) {
 				continue
 			}
 		}
-		return table, nil
+		return true, nil
 	}
 
-	return nil, nil
+	return false, nil
 }
 
-// CreateFilterTable creates filter table.
-func CreateFilterTable(v, tableName string) error {
-	return createTable(v, tableName)
-}
-
-// CreateNatTable creates nat table.
-func CreateNatTable(v, tableName string) error {
-	return createTable(v, tableName)
-}
-
-func createTable(v, tableName string) error {
+// CreateTable creates a table.
+func CreateTable(v, tableName string) error {
 	if err := isSupportedIPVersion(v); err != nil {
 		return err
 	}

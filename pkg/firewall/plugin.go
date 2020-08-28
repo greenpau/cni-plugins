@@ -67,12 +67,12 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsFilterTableExist(v, p.filterTableName)
+		exists, err := utils.IsTableExist(v, p.filterTableName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s filter table info: %s", v, err)
 		}
 		if !exists {
-			if err := utils.CreateFilterTable(v, p.filterTableName); err != nil {
+			if err := utils.CreateTable(v, p.filterTableName); err != nil {
 				return fmt.Errorf("failed creating ipv%s filter table: %s", v, err)
 			}
 		}
@@ -148,7 +148,7 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsFilterTableExist(v, p.filterTableName)
+		exists, err := utils.IsTableExist(v, p.filterTableName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s filter table %s info: %s", v, p.filterTableName, err)
 		}
@@ -197,7 +197,7 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 	}
 
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsFilterTableExist(v, p.filterTableName)
+		exists, err := utils.IsTableExist(v, p.filterTableName)
 		if err != nil {
 			return fmt.Errorf("failed obtaining ipv%s filter table %s info: %s", v, p.filterTableName, err)
 		}
