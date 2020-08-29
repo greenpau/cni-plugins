@@ -147,6 +147,8 @@ func CreateChain(v, tableName, chainName, chainType, chainHookType, chainPriorit
 		ch.Priority = nftables.ChainPriorityNATSource
 	case "raw":
 		ch.Priority = nftables.ChainPriorityRaw
+	case "filter":
+		ch.Priority = nftables.ChainPriorityFilter
 	case "none":
 		// do nothing
 	default:

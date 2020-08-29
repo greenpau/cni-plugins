@@ -37,6 +37,8 @@ type Config struct {
 	InputNatChainName       string `json:"input_nat_chain_name"`
 	RawTableName            string `json:"raw_table_name"`
 	PreRoutingRawChainName  string `json:"prerouting_raw_chain_name"`
+	FilterTableName         string `json:"filter_table_name"`
+	ForwardFilterChainName  string `json:"forward_filter_chain_name"`
 }
 
 // MappingEntry holds the port mapping configuration.
@@ -89,6 +91,13 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 	}
 	if conf.PreRoutingRawChainName == "" {
 		conf.PreRoutingRawChainName = "prerouting"
+	}
+
+	if conf.FilterTableName == "" {
+		conf.FilterTableName = "filter"
+	}
+	if conf.ForwardFilterChainName == "" {
+		conf.ForwardFilterChainName = "forward"
 	}
 
 	// Parse previous result.

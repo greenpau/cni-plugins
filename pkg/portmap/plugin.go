@@ -25,6 +25,8 @@ type Plugin struct {
 	inputNatChainName       string
 	rawTableName            string
 	preRoutingRawChainName  string
+	filterTableName         string
+	forwardFilterChainName  string
 	interfaceChain          []string
 	targetInterfaces        map[string]*Interface
 	targetIPVersions        map[string]bool
@@ -43,6 +45,8 @@ func NewPlugin(conf *Config) *Plugin {
 		inputNatChainName:       conf.InputNatChainName,
 		rawTableName:            conf.RawTableName,
 		preRoutingRawChainName:  conf.PreRoutingRawChainName,
+		filterTableName:         conf.FilterTableName,
+		forwardFilterChainName:  conf.ForwardFilterChainName,
 		targetIPVersions:        make(map[string]bool),
 		interfaceChain:          []string{},
 	}
@@ -178,6 +182,33 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				return fmt.Errorf(
 					"failed creating ipv%s %s chain in %s table: %s",
 					v, p.preRoutingRawChainName, p.rawTableName, err,
+				)
+			}
+		}
+
+		// Filter Table and Chains Setup
+		exists, err = utils.IsTableExist(v, p.filterTableName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s %s table info: %s", v, p.filterTableName, err)
+		}
+		if !exists {
+			if err := utils.CreateTable(v, p.filterTableName); err != nil {
+				return fmt.Errorf("failed creating ipv%s %s table: %s", v, p.filterTableName, err)
+			}
+		}
+
+		exists, err = utils.IsChainExists(v, p.filterTableName, p.forwardFilterChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.forwardFilterChainName, p.filterTableName, err,
+			)
+		}
+		if !exists {
+			if err := utils.CreateFilterForwardChain(v, p.filterTableName, p.forwardFilterChainName); err != nil {
+				return fmt.Errorf(
+					"failed creating ipv%s %s chain in %s table: %s",
+					v, p.forwardFilterChainName, p.filterTableName, err,
 				)
 			}
 		}
@@ -427,6 +458,29 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 			return fmt.Errorf(
 				"ipv%s chain %s in %s table does not exist",
 				v, p.preRoutingRawChainName, p.rawTableName,
+			)
+		}
+
+		// Check Filter table
+		exists, err = utils.IsTableExist(v, p.filterTableName)
+		if err != nil {
+			return fmt.Errorf("failed obtaining ipv%s %s table info: %s", v, p.filterTableName, err)
+		}
+		if !exists {
+			return fmt.Errorf("ipv%s table %s does not exist", v, p.filterTableName)
+		}
+
+		exists, err = utils.IsChainExists(v, p.filterTableName, p.forwardFilterChainName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed obtaining info about ipv%s %s chain in %s table: %s",
+				v, p.forwardFilterChainName, p.filterTableName, err,
+			)
+		}
+		if !exists {
+			return fmt.Errorf(
+				"ipv%s chain %s in %s table does not exist",
+				v, p.forwardFilterChainName, p.filterTableName,
 			)
 		}
 
