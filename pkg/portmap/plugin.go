@@ -299,6 +299,20 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 						chainName, p.natTableName, pm, err,
 					)
 				}
+
+				if err := utils.AddDestinationNatRewriteRules(
+					addr.Version,
+					p.rawTableName,
+					p.preRoutingRawChainName,
+					destAddr,
+					pm,
+				); err != nil {
+					return fmt.Errorf(
+						"failed creating destination NAT rewrite rules in %s chain of %s table for %v: %s",
+						p.preRoutingRawChainName, p.rawTableName, pm, err,
+					)
+				}
+
 			}
 
 		}
