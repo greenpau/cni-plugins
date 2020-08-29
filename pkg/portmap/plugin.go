@@ -214,11 +214,13 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
+	// Set bridge interface name
+	bridgeIntfName := p.interfaceChain[0]
+
 	// Add post-routing rules
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName("npo", conf.ContainerID)
-			bridgeIntfName := p.interfaceChain[0]
 			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
 			if err != nil {
 				return fmt.Errorf(
@@ -261,22 +263,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				return fmt.Errorf(
 					"failed creating postrouting rules in ipv%s %s chain of %s table: %s",
 					addr.Version, chainName, p.natTableName, err,
-				)
-			}
-
-			// Check whether the rule allowing traffic to leave out of
-			// bridge interface, e.g. cni-podman0, exists.
-			// If it does not exist, create it.
-			if err := utils.AddFilterForwardMappedPortRules(
-				addr.Version,
-				p.filterTableName,
-				p.forwardFilterChainName,
-				addr,
-				bridgeIntfName,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating filter forward mapped port rules in ipv%s %s chain of %s table: %s",
-					addr.Version, p.forwardFilterChainName, p.filterTableName, err,
 				)
 			}
 		}
@@ -358,6 +344,23 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					return fmt.Errorf(
 						"failed creating destination NAT rewrite rules in %s chain of %s table for %v: %s",
 						p.preRoutingRawChainName, p.rawTableName, pm, err,
+					)
+				}
+
+				// Check whether the rule allowing traffic to leave out of
+				// bridge interface, e.g. cni-podman0, exists.
+				// If it does not exist, create it.
+				if err := utils.AddFilterForwardMappedPortRules(
+					addr.Version,
+					p.filterTableName,
+					p.forwardFilterChainName,
+					destAddr,
+					bridgeIntfName,
+					pm,
+				); err != nil {
+					return fmt.Errorf(
+						"failed creating filter forward mapped port rules in ipv%s %s chain of %s table for %v: %s",
+						addr.Version, p.forwardFilterChainName, p.filterTableName, pm, err,
 					)
 				}
 

@@ -5,14 +5,17 @@ import (
 	"github.com/google/nftables"
 )
 
-type chainInfo struct {
+// ChainInfo holds the rules of a particular chain
+type ChainInfo struct {
 	RuleCount int
 	Positions []uint64
 	Handles   []uint64
 	Rules     []*nftables.Rule
 }
 
-func getChainProps(v, tableName, chainName string) (*chainInfo, error) {
+// GetChainProps returns the rules and other properties of
+// a particular chain.
+func GetChainProps(v, tableName, chainName string) (*ChainInfo, error) {
 	if err := isSupportedIPVersion(v); err != nil {
 		return nil, err
 	}
@@ -53,7 +56,7 @@ func getChainProps(v, tableName, chainName string) (*chainInfo, error) {
 		return nil, fmt.Errorf("chain %s in table %s not found", chainName, tableName)
 	}
 
-	info := &chainInfo{
+	info := &ChainInfo{
 		RuleCount: 0,
 		Positions: []uint64{},
 		Handles:   []uint64{},
@@ -80,6 +83,12 @@ func getChainProps(v, tableName, chainName string) (*chainInfo, error) {
 	}
 
 	for _, r := range rules {
+		if chainName != r.Chain.Name {
+			continue
+		}
+		if tableName != r.Table.Name {
+			continue
+		}
 		info.RuleCount++
 		info.Positions = append(info.Positions, r.Position)
 		info.Handles = append(info.Handles, r.Handle)

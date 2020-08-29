@@ -57,7 +57,7 @@ func GetJumpRule(v, tableName, srcChainName, dstChainName string) (*nftables.Rul
 	if err := isSupportedIPVersion(v); err != nil {
 		return nil, err
 	}
-	chainProps, err := getChainProps(v, tableName, srcChainName)
+	chainProps, err := GetChainProps(v, tableName, srcChainName)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func CreateJumpRule(v, tableName, srcChainName, dstChainName string) error {
 		Table: tb,
 	}
 
-	chainProps, err := getChainProps(v, tableName, srcChainName)
+	chainProps, err := GetChainProps(v, tableName, srcChainName)
 	if err != nil {
 		return fmt.Errorf(
 			"failed adding jump rule from chain %s in ipv%s %s table to chain %s due to failure to list chains: %s",
