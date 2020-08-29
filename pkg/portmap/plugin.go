@@ -212,9 +212,9 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				)
 			}
 		}
-
 	}
 
+	// Add post-routing rules
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName("npo", conf.ContainerID)
@@ -263,9 +263,26 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					addr.Version, chainName, p.natTableName, err,
 				)
 			}
+
+			// Check whether the rule allowing traffic to leave out of
+			// bridge interface, e.g. cni-podman0, exists.
+			// If it does not exist, create it.
+			if err := utils.AddFilterForwardMappedPortRules(
+				addr.Version,
+				p.filterTableName,
+				p.forwardFilterChainName,
+				addr,
+				bridgeIntfName,
+			); err != nil {
+				return fmt.Errorf(
+					"failed creating filter forward mapped port rules in ipv%s %s chain of %s table: %s",
+					addr.Version, p.forwardFilterChainName, p.filterTableName, err,
+				)
+			}
 		}
 	}
 
+	// Add pre-routing rules
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName("npr", conf.ContainerID)
