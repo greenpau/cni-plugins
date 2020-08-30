@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	//"github.com/davecgh/go-spew/spew"
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
 
@@ -16,8 +15,6 @@ func AddFilterForwardMappedPortRules(v, tableName, chainName string, addr net.IP
 	if err := isSupportedIPVersion(v); err != nil {
 		return err
 	}
-
-	//return fmt.Errorf("NFT-PORTMAP-ADD: %s", spew.Sdump(tableName))
 
 	conn, err := initNftConn()
 	if err != nil {
@@ -42,7 +39,6 @@ func AddFilterForwardMappedPortRules(v, tableName, chainName string, addr net.IP
 	if err != nil {
 		return err
 	}
-	//return fmt.Errorf("NFT-PORTMAP-ADD: %s", spew.Sdump(chain))
 
 	r := &nftables.Rule{
 		Table: tb,
@@ -52,7 +48,6 @@ func AddFilterForwardMappedPortRules(v, tableName, chainName string, addr net.IP
 
 	if chain.RuleCount > 0 {
 		r.Position = chain.Positions[0]
-		r.Position = chain.Handles[0]
 	}
 
 	r.Exprs = append(r.Exprs, &expr.Meta{
@@ -119,6 +114,10 @@ func AddFilterForwardMappedPortRules(v, tableName, chainName string, addr net.IP
 	})
 
 	r.Exprs = append(r.Exprs, &expr.Counter{})
+
+	r.Exprs = append(r.Exprs, &expr.Verdict{
+		Kind: expr.VerdictAccept,
+	})
 
 	if chain.RuleCount == 0 {
 		conn.AddRule(r)

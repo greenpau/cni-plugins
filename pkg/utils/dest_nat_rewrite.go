@@ -12,7 +12,7 @@ import (
 
 // AddDestinationNatRewriteRules destination rewrite rule for the traffic
 // arriving on a specific port.
-func AddDestinationNatRewriteRules(v, tableName, chainName string, addr net.IPNet, pm MappingEntry) error {
+func AddDestinationNatRewriteRules(v, tableName, chainName, intfName string, addr net.IPNet, pm MappingEntry) error {
 	conn, err := initNftConn()
 	if err != nil {
 		return err
@@ -41,6 +41,18 @@ func AddDestinationNatRewriteRules(v, tableName, chainName string, addr net.IPNe
 	// counter packets 0 bytes 0
 
 	r.Exprs = append(r.Exprs, &expr.Counter{})
+
+	// match all interface but the interface
+	r.Exprs = append(r.Exprs, &expr.Meta{
+		Key:      expr.MetaKeyIIFNAME,
+		Register: 1,
+	})
+	r.Exprs = append(r.Exprs, &expr.Cmp{
+		//Op:       expr.CmpOpEq,
+		Op:       expr.CmpOpNeq,
+		Register: 1,
+		Data:     EncodeInterfaceName(intfName),
+	})
 
 	// tcp dport <RCV_PORT_NUM>
 

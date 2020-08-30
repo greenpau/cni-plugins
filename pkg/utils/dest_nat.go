@@ -44,6 +44,8 @@ func AddDestinationNatRules(v, tableName, chainName string, addr net.IPNet, pm M
 		Exprs: []expr.Any{},
 	}
 
+	// match port
+
 	r.Exprs = append(r.Exprs, &expr.Meta{
 		Key:      expr.MetaKeyL4PROTO,
 		Register: 1,

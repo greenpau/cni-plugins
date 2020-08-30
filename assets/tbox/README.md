@@ -36,3 +36,9 @@ alias podls="podman ps -a"
 alias podrm="podman ps -a | egrep \"(Exited|Created)\" | cut -d\" \" -f1 | xargs podman rm"
 alias podstop="podman ps -a | egrep \" (Up) \" | cut -d\" \" -f1 | xargs podman stop"
 ```
+
+If necessary, take a traffic capture at the host level:
+
+```
+sudo tcpdump -nn -i enp0s3 port not 22 and port not 53
+```

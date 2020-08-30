@@ -338,6 +338,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					addr.Version,
 					p.rawTableName,
 					p.preRoutingRawChainName,
+					bridgeIntfName,
 					destAddr,
 					pm,
 				); err != nil {

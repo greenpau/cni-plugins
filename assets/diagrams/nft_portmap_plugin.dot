@@ -1,0 +1,39 @@
+digraph G {
+    graph [pad="0.5", nodesep="2", ranksep="0.5"];
+
+    subgraph overlay_network {
+        color=black;
+        label="Overlay Network";
+        fontname="Monospace";
+        style=dashed;
+        labelloc="t";
+        w10 -> host001 [arrowhead=none];
+        w8 -> box_host001_host002 [arrowhead=none,style=invis];
+        w6 -> host002 [arrowhead=none];
+        w4 -> box_host002_host003 [arrowhead=none,style=invis];
+        w2 -> host003 [arrowhead=none];
+        host001 -> host001_label [arrowhead=none];
+        host002 -> host002_label [arrowhead=none];
+        host003 -> host003_label [arrowhead=none];
+
+        host001 -> box_host001_host002 [arrowhead=none,style=dashed,color=yellowgreen,penwidth=2];
+        box_host001_host002 -> host002 [style=dashed,color=yellowgreen,penwidth=2];
+        host002 -> box_host002_host003 [arrowhead=none,style=dashed,color=yellowgreen,penwidth=2];
+        box_host002_host003 -> host003 [style=dashed,color=yellowgreen,penwidth=2];
+
+        w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11 [shape=point,width="0.01"];
+        w1 -> w2 -> w3 -> w4 -> w5 -> w6 -> w7 -> w8 -> w9 -> w10 -> w11 [arrowhead=none];
+        {rank=same; w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11 }
+
+        {rank=same; host001, host002, host003; box_host001_host002; box_host002_host003}
+        host001_label [label = "Host 1",shape=box3d,fontname="Monospace",style=filled,fillcolor=lightgrey]
+        host002_label [label = "Host 2",shape=box3d,fontname="Monospace",style=filled,fillcolor=lightgrey];
+        host003_label [label = "Host 3",shape=box3d,fontname="Monospace",style=filled,fillcolor=lightgrey];
+        host001 [label = "eth0\n10.88.0.11/24",color=grey,shape=box,fontsize=10,fontname="Courier"];
+        host002 [label = "eth0\n10.88.0.12/24",color=grey,shape=box,fontsize=10,fontname="Courier"];
+        host003 [label = "eth0\n10.88.0.13/24",color=grey,shape=box,fontsize=10,fontname="Courier"];
+        box_host001_host002 [label="UDP\nMulticast",shape=none,fontsize=10,fontname="Courier"];
+        box_host002_host003 [label="UDP\nMulticast",shape=none,fontsize=10,fontname="Courier"];
+    }
+
+}

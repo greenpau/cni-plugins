@@ -1,4 +1,4 @@
-.PHONY: test ctest covdir coverage linter qtest clean dep release info build
+.PHONY: test ctest covdir coverage linter qtest clean dep release info build diagram
 APP_VERSION:=$(shell cat VERSION | head -1)
 GIT_COMMIT:=$(shell git describe --dirty --always)
 GIT_BRANCH:=$(shell git rev-parse --abbrev-ref HEAD -- | head -1)
@@ -135,3 +135,5 @@ deploy:
 		sudo cp ./bin/$${PLUGIN}.$(BUILD_GOOS)-$(BUILD_GOARCH) /usr/local/lib/cni/$${PLUGIN};\
 	done
 
+diagram:
+	@dot -Tpng assets/diagrams/nft_portmap_plugin.dot -o assets/diagrams/nft_portmap_plugin.png
