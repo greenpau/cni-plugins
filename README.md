@@ -1,6 +1,6 @@
 # CNI Plugins compatible with nftables
 
-<a href="https://github.com/greenpau/cni-plugins/actions/" target="_blank"><img src="https://github.com/greenpau/cni-plugins/workflows/build/badge.svg?branch=master"></a>
+<a href="https://github.com/greenpau/cni-plugins/actions/" target="_blank"><img src="https://github.com/greenpau/cni-plugins/workflows/build/badge.svg?branch=main"></a>
 <a href="https://pkg.go.dev/github.com/greenpau/cni-plugins" target="_blank"><img src="https://img.shields.io/badge/godoc-reference-blue.svg"></a>
 ![License](https://img.shields.io/github/license/greenpau/cni-plugins)
 
@@ -100,10 +100,36 @@ First, start the container:
 podman run --net=podman -P -d nginxdemos/hello
 ```
 
-Next, attach to the container:
+Alternatively, map the container port to port `8080`:
+
+```bash
+podman run --net=podman -p 8080:80/tcp -d nginxdemos/hello
+```
+
+Verify connectivity to the container:
+
+```bash
+curl -v http://127.0.0.1:8080
+```
+
+## Miscellaneous
+
+### Known Issues
+
+There could be an issue with checksums when using `portmap` plugin.
+
+Specifically, packets would arrive to a container, but they would be
+disregarded and no `SYN/ACK` would be sent.
+
+When running `tcpdump` inside a container, there is checksum error
+`cksum 0xd776 (incorrect -> 0xd8b9)`.
 
 ```
-podman exec -it <Container ID> /bin/bash
+$ tcpdump -i eth0 -vvv -nne
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+01:05:16.704789 ee:58:3f:4d:1f:23 > ea:56:b4:c6:4f:c7, ethertype IPv4 (0x0800), length 58: (tos 0x0, ttl 63, id 8844, offset 0, flags [none], proto TCP (6), length 44)
+    10.0.2.2.54017 > 10.88.0.116.80: Flags [S], cksum 0xd776 (incorrect -> 0xd8b9), seq 2337032705, win 65535, options [mss 1460], length 0
 ```
 
-
+See similar issue
+[here](https://stackoverflow.com/questions/26716722/tcp-receives-packets-but-it-ignores-them).

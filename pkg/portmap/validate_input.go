@@ -45,6 +45,7 @@ func (p *Plugin) validateInput(conf *Config, result *current.Result) error {
 		if _, interfaceExists := p.targetInterfaces[intf.Name]; interfaceExists {
 			return fmt.Errorf("found duplicate interface name %s", intf.Name)
 		}
+		p.interfaceChain = append(p.interfaceChain, intf.Name)
 		if intf.Sandbox == "" {
 			continue
 		}
