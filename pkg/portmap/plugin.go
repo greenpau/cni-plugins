@@ -216,6 +216,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 
 	// Set bridge interface name
 	bridgeIntfName := p.interfaceChain[0]
+	nslinkIntfName := p.interfaceChain[1]
 
 	// Add post-routing rules
 	for _, targetInterface := range p.targetInterfaces {
@@ -335,12 +336,15 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				}
 
 				if err := utils.AddDestinationNatRewriteRules(
-					addr.Version,
-					p.rawTableName,
-					p.preRoutingRawChainName,
-					bridgeIntfName,
-					destAddr,
-					pm,
+					map[string]interface{}{
+						"version":          addr.Version,
+						"table":            p.rawTableName,
+						"chain":            p.preRoutingRawChainName,
+						"bridge_interface": bridgeIntfName,
+						"veth_interface":   nslinkIntfName,
+						"ip_address":       destAddr,
+						"port_mapping":     pm,
+					},
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating destination NAT rewrite rules in %s chain of %s table for %v: %s",
