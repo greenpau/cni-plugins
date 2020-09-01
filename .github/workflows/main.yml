@@ -45,6 +45,7 @@ jobs:
       run: |
         sudo apt-get --assume-yes install make
         sudo apt-get --assume-yes install nftables
+        sudo nft --version
         sudo nft -a list ruleset
     - name: Install Go modules
       run: |
