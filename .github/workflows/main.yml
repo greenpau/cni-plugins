@@ -44,6 +44,8 @@ jobs:
     - name: Install prerequisites
       run: |
         sudo apt-get --assume-yes install make
+        sudo apt-get --assume-yes install nftables
+        sudo nft -a list ruleset
     - name: Install Go modules
       run: |
         make dep
