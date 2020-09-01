@@ -11,7 +11,15 @@ import (
 )
 
 // AddDestinationNatRules creates destination NAT rules
-func AddDestinationNatRules(v, tableName, chainName string, addr net.IPNet, pm MappingEntry) error {
+func AddDestinationNatRules(opts map[string]interface{}) error {
+	v := opts["version"].(string)
+	tableName := opts["table"].(string)
+	chainName := opts["chain"].(string)
+	bridgeIntfName := opts["bridge_interface"].(string)
+	//nslinkIntfName := opts["veth_interface"].(string)
+	addr := opts["ip_address"].(net.IPNet)
+	pm := opts["port_mapping"].(MappingEntry)
+
 	/*
 		rule := fmt.Sprintf(
 			"%s dport { %d } dnat %s:%d;",
@@ -43,6 +51,17 @@ func AddDestinationNatRules(v, tableName, chainName string, addr net.IPNet, pm M
 		Chain: ch,
 		Exprs: []expr.Any{},
 	}
+
+	// match non-container interface
+	r.Exprs = append(r.Exprs, &expr.Meta{
+		Key:      expr.MetaKeyIIFNAME,
+		Register: 1,
+	})
+	r.Exprs = append(r.Exprs, &expr.Cmp{
+		Op:       expr.CmpOpNeq,
+		Register: 1,
+		Data:     EncodeInterfaceName(bridgeIntfName),
+	})
 
 	// match port
 

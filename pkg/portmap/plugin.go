@@ -323,11 +323,15 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 
 			for _, pm := range conf.RuntimeConfig.PortMaps {
 				if err := utils.AddDestinationNatRules(
-					addr.Version,
-					p.natTableName,
-					chainName,
-					destAddr,
-					pm,
+					map[string]interface{}{
+						"version":          addr.Version,
+						"table":            p.natTableName,
+						"chain":            chainName,
+						"bridge_interface": bridgeIntfName,
+						"veth_interface":   nslinkIntfName,
+						"ip_address":       destAddr,
+						"port_mapping":     pm,
+					},
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating destination NAT rules in %s chain of %s table for %v: %s",
