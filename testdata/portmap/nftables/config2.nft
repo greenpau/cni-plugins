@@ -1,0 +1,42 @@
+table ip nat {
+	chain postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		jump cni-npo-78f486a1c7999cfe8e0526d
+	}
+
+	chain prerouting {
+		type nat hook prerouting priority dstnat; policy accept;
+		jump cni-npr-78f486a1c7999cfe8e0526d
+	}
+
+	chain output {
+		type nat hook output priority -100; policy accept;
+	}
+
+	chain input {
+		type nat hook input priority 100; policy accept;
+	}
+
+	chain cni-npo-78f486a1c7999cfe8e0526d {
+		iifname "cni-podman0" ip saddr 10.88.0.7 ip daddr 224.0.0.0/24 counter packets 0 bytes 0 return
+		iifname "cni-podman0" ip saddr 10.88.0.7 ip daddr 255.255.255.255 counter packets 0 bytes 0 return
+		iifname "cni-podman0" ip saddr 10.88.0.7 counter packets 0 bytes 0 masquerade
+	}
+
+	chain cni-npr-78f486a1c7999cfe8e0526d {
+		iifname != "cni-podman0" tcp dport 46063 dnat to 10.88.0.7:80
+	}
+}
+table ip raw {
+	chain prerouting {
+		type filter hook prerouting priority raw; policy accept;
+	}
+}
+table ip filter {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		oifname "cni-podman0" ip daddr 10.88.0.7 tcp dport 80 counter packets 0 bytes 0 accept
+		log prefix "ip4 forward drop: "
+		counter packets 0 bytes 0 drop
+	}
+}

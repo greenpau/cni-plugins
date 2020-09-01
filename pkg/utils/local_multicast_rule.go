@@ -8,7 +8,13 @@ import (
 	"net"
 )
 
-func addPostRoutingLocalMulticastRule(v, tableName, chainName string, addr *current.IPConfig) error {
+func addPostRoutingLocalMulticastRule(opts map[string]interface{}) error {
+	v := opts["version"].(string)
+	tableName := opts["table"].(string)
+	chainName := opts["chain"].(string)
+	bridgeIntfName := opts["bridge_interface"].(string)
+	addr := opts["ip_address"].(*current.IPConfig)
+
 	conn, err := initNftConn()
 	if err != nil {
 		return err
@@ -35,6 +41,16 @@ func addPostRoutingLocalMulticastRule(v, tableName, chainName string, addr *curr
 		Chain: ch,
 		Exprs: []expr.Any{},
 	}
+
+	r.Exprs = append(r.Exprs, &expr.Meta{
+		Key:      expr.MetaKeyIIFNAME,
+		Register: 1,
+	})
+	r.Exprs = append(r.Exprs, &expr.Cmp{
+		Op:       expr.CmpOpEq,
+		Register: 1,
+		Data:     EncodeInterfaceName(bridgeIntfName),
+	})
 
 	if addr.Version == "6" {
 		r.Exprs = append(r.Exprs, &expr.Payload{

@@ -1,21 +1,18 @@
 package utils
 
-import (
-	"github.com/containernetworking/cni/pkg/types/current"
-)
-
 // AddPostRoutingRules adds a set of rules in postrouting chain of nat table.
-func AddPostRoutingRules(v, tableName, chainName string, addr *current.IPConfig, intfName string) error {
+func AddPostRoutingRules(opts map[string]interface{}) error {
+	v := opts["version"].(string)
 	if err := isSupportedIPVersion(v); err != nil {
 		return err
 	}
-	if err := addPostRoutingLocalMulticastRule(v, tableName, chainName, addr); err != nil {
+	if err := addPostRoutingLocalMulticastRule(opts); err != nil {
 		return err
 	}
-	if err := addPostRoutingBroadcastRule(v, tableName, chainName, addr); err != nil {
+	if err := addPostRoutingBroadcastRule(opts); err != nil {
 		return err
 	}
-	if err := addPostRoutingSourceNatRule(v, tableName, chainName, addr, intfName); err != nil {
+	if err := addPostRoutingSourceNatRule(opts); err != nil {
 		return err
 	}
 	return nil

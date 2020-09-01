@@ -8,7 +8,13 @@ import (
 	//"net"
 )
 
-func addPostRoutingSourceNatRule(v, tableName, chainName string, addr *current.IPConfig, intfName string) error {
+func addPostRoutingSourceNatRule(opts map[string]interface{}) error {
+	v := opts["version"].(string)
+	tableName := opts["table"].(string)
+	chainName := opts["chain"].(string)
+	bridgeIntfName := opts["bridge_interface"].(string)
+	addr := opts["ip_address"].(*current.IPConfig)
+
 	if v != "4" {
 		return nil
 	}
@@ -33,6 +39,16 @@ func addPostRoutingSourceNatRule(v, tableName, chainName string, addr *current.I
 		Exprs: []expr.Any{},
 	}
 
+	r.Exprs = append(r.Exprs, &expr.Meta{
+		Key:      expr.MetaKeyIIFNAME,
+		Register: 1,
+	})
+	r.Exprs = append(r.Exprs, &expr.Cmp{
+		Op:       expr.CmpOpEq,
+		Register: 1,
+		Data:     EncodeInterfaceName(bridgeIntfName),
+	})
+
 	// payload load 4b @ network header + 12 => reg 1
 	r.Exprs = append(r.Exprs, &expr.Payload{
 		DestRegister: 1,
@@ -45,16 +61,6 @@ func addPostRoutingSourceNatRule(v, tableName, chainName string, addr *current.I
 		Op:       expr.CmpOpEq,
 		Register: 1,
 		Data:     addr.Address.IP.To4(),
-	})
-
-	r.Exprs = append(r.Exprs, &expr.Meta{
-		Key:      expr.MetaKeyIIFNAME,
-		Register: 1,
-	})
-	r.Exprs = append(r.Exprs, &expr.Cmp{
-		Op:       expr.CmpOpEq,
-		Register: 1,
-		Data:     EncodeInterfaceName(intfName),
 	})
 
 	r.Exprs = append(r.Exprs, &expr.Counter{})

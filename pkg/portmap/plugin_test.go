@@ -13,20 +13,23 @@ import (
 
 func TestPlugin(t *testing.T) {
 	var tests = []struct {
-		name       string
-		path       string
-		shouldSkip bool
-		shouldErr  bool
+		name               string
+		path               string
+		shouldSkip         bool
+		shouldDeleteConfig bool
+		shouldErr          bool
 	}{
 		{
-			name:       "skips configures nftables when config has no portMappings",
-			path:       "testdata/portmap/stdindata/stdindata1.json",
-			shouldSkip: true,
+			name: "skips configureing nftables when config has no portMappings",
+			path: "testdata/portmap/stdindata/stdindata1.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: false,
 		},
 		{
-			name: "configures nftables to NAT TCP from host port 46063 to container port 80",
+			name: "configures nftables to perform destination NAT from host port tcp/46063 to container port 80",
 			path: "testdata/portmap/stdindata/stdindata2.json",
 			//shouldSkip: true,
+			shouldDeleteConfig: false,
 		},
 	}
 
@@ -110,14 +113,14 @@ func TestPlugin(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				/*
+				if test.shouldDeleteConfig {
 					err = testutils.CmdDelWithArgs(args, func() error {
 						return Delete(args)
 					})
 					if err != nil {
 						return err
 					}
-				*/
+				}
 				return nil
 			})
 

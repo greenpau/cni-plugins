@@ -13,30 +13,59 @@ import (
 
 func TestPlugin(t *testing.T) {
 	var tests = []struct {
-		name       string
-		path       string
-		shouldSkip bool
-		shouldErr  bool
+		name               string
+		path               string
+		shouldSkip         bool
+		shouldDeleteConfig bool
+		shouldErr          bool
 	}{
 		{
-			name: "configures nftables for a single dual-stack interface",
+			name: "configures nftables for a single dual stack interface",
 			path: "testdata/firewall/results/result10.json",
 			//shouldSkip: true,
+			shouldDeleteConfig: false,
 		},
 		{
-			name:       "configures nftables for two dual-stack interfaces",
-			path:       "testdata/firewall/results/result11.json",
-			shouldSkip: true,
+			name: "configures nftables for two dual stack interfaces",
+			path: "testdata/firewall/results/result11.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: false,
 		},
 		{
-			name:       "configures nftables for a single IPv4-only interface",
-			path:       "testdata/firewall/results/result12.json",
-			shouldSkip: true,
+			name: "configures nftables for a single ipv4 only interface",
+			path: "testdata/firewall/results/result12.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: false,
 		},
 		{
-			name:       "configures nftables for a single IPv6-only interface",
-			path:       "testdata/firewall/results/result13.json",
-			shouldSkip: true,
+			name: "configures nftables for a single ipv6 only interface",
+			path: "testdata/firewall/results/result13.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: false,
+		},
+		{
+			name: "configures nftables for a single dual stack interface and cleans up the configuration at the end",
+			path: "testdata/firewall/results/result10.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: true,
+		},
+		{
+			name: "configures nftables for two dual stack interfaces and cleans up the configuration at the end",
+			path: "testdata/firewall/results/result11.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: true,
+		},
+		{
+			name: "configures nftables for a single ipv4 only interface and cleans up the configuration at the end",
+			path: "testdata/firewall/results/result12.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: true,
+		},
+		{
+			name: "configures nftables for a single ipv6 only interface and cleans up the configuration at the end",
+			path: "testdata/firewall/results/result13.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: true,
 		},
 	}
 
@@ -122,11 +151,13 @@ func TestPlugin(t *testing.T) {
 					return err
 				}
 
-				err = testutils.CmdDelWithArgs(args, func() error {
-					return Delete(args)
-				})
-				if err != nil {
-					return err
+				if test.shouldDeleteConfig {
+					err = testutils.CmdDelWithArgs(args, func() error {
+						return Delete(args)
+					})
+					if err != nil {
+						return err
+					}
 				}
 				return nil
 			})

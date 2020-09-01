@@ -255,11 +255,14 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 			}
 
 			if err := utils.AddPostRoutingRules(
-				addr.Version,
-				p.natTableName,
-				chainName,
-				addr,
-				bridgeIntfName,
+				map[string]interface{}{
+					"version":          addr.Version,
+					"table":            p.natTableName,
+					"chain":            chainName,
+					"bridge_interface": bridgeIntfName,
+					"veth_interface":   nslinkIntfName,
+					"ip_address":       addr,
+				},
 			); err != nil {
 				return fmt.Errorf(
 					"failed creating postrouting rules in ipv%s %s chain of %s table: %s",

@@ -4,14 +4,13 @@ LABEL maintainer="Paul Greenberg"
 
 RUN yum -y install bind-utils openssh-server openssh-clients iproute
 RUN yum -y install tcpdump telnet nmap-ncat traceroute net-tools mailx iperf3 wget
+RUN yum -y --enablerepo=PowerTools install elinks
 
 RUN wget https://github.com/caddyserver/caddy/releases/download/v2.2.0-rc.1/caddy_2.2.0-rc.1_linux_amd64.tar.gz && \
 tar xvzf caddy_2.2.0-rc.1_linux_amd64.tar.gz && \
 chmod +x caddy && mv caddy /usr/bin
 
 ADD ./init.sh /init.sh
-ADD ./config.json /etc/caddy/config.json
-ADD ./index.html /var/lib/caddy/index.html
 
 EXPOSE 5201
 EXPOSE 80
