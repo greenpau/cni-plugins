@@ -339,22 +339,24 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					)
 				}
 
-				if err := utils.AddDestinationNatRewriteRules(
-					map[string]interface{}{
-						"version":          addr.Version,
-						"table":            p.rawTableName,
-						"chain":            p.preRoutingRawChainName,
-						"bridge_interface": bridgeIntfName,
-						"veth_interface":   nslinkIntfName,
-						"ip_address":       destAddr,
-						"port_mapping":     pm,
-					},
-				); err != nil {
-					return fmt.Errorf(
-						"failed creating destination NAT rewrite rules in %s chain of %s table for %v: %s",
-						p.preRoutingRawChainName, p.rawTableName, pm, err,
-					)
-				}
+				/*
+					if err := utils.AddDestinationNatRewriteRules(
+						map[string]interface{}{
+							"version":          addr.Version,
+							"table":            p.rawTableName,
+							"chain":            p.preRoutingRawChainName,
+							"bridge_interface": bridgeIntfName,
+							"veth_interface":   nslinkIntfName,
+							"ip_address":       destAddr,
+							"port_mapping":     pm,
+						},
+					); err != nil {
+						return fmt.Errorf(
+							"failed creating destination NAT rewrite rules in %s chain of %s table for %v: %s",
+							p.preRoutingRawChainName, p.rawTableName, pm, err,
+						)
+					}
+				*/
 
 				// Check whether the rule allowing traffic to leave out of
 				// bridge interface, e.g. cni-podman0, exists.
