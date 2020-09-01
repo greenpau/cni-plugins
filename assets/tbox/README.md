@@ -20,6 +20,12 @@ After starting the container, connect to it:
 sudo podman exec -it worker1 /bin/bash
 ```
 
+While inside the container, check internet connectivity:
+
+```bash
+curl -v http://checkip.amazonaws.com/
+```
+
 ## Miscellaneous
 
 ### Shortcuts
@@ -37,12 +43,13 @@ Additionally, it is worth adding the following `podman` shortcuts:
 alias podls="podman ps -a"
 alias podrm="podman ps -a | egrep \"(Exited|Created)\" | cut -d\" \" -f1 | xargs podman rm"
 alias podstop="podman ps -a | egrep \" (Up) \" | cut -d\" \" -f1 | xargs podman stop"
+alias podnsrm="ip netns | grep cnitest | xargs ip netns del"
 ```
 
 If necessary, take a traffic capture at the host level:
 
 ```
-sudo tcpdump -nn -i enp0s3 port not 22 and port not 53
+sudo tcpdump -vvv -nne -i enp0s3 port not 22 and port not 53
 ```
 
 ### Netfilter Debugging

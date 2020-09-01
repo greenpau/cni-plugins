@@ -29,6 +29,12 @@ This repository contains the following plugins:
 
 <!-- end-markdown-toc -->
 
+## Target Systems
+
+The plugins had been tested on the following systems:
+
+* CentOS 8, kernel version: `4.18.0-193.14.2.el8_2.x86_64`
+
 ## Getting Started
 
 ### cni-nftables-firewall
@@ -63,12 +69,57 @@ and triggering `Add()`, `Delete()`, and `Check()` function.
 
 ### Integration Testing
 
-First, copy `testdata/net.d/87-podman-bridge.conflist` to
+First, copy `assets/net.d/87-podman-bridge.conflist` to
 `/etc/cni/net.d/`.
 
 ```bash
-sudo cp testdata/net.d/87-podman-bridge.conflist /etc/cni/net.d/
+sudo cp assets/net.d/87-podman-bridge.conflist /etc/cni/net.d/
 ```
+
+The configuration is as follows:
+
+```json
+{
+  "cniVersion": "0.4.0",
+  "name": "podman",
+  "plugins": [
+    {
+      "type": "bridge",
+      "bridge": "cni-podman0",
+      "isGateway": true,
+      "ipMasq": false,
+      "ipam": {
+        "type": "host-local",
+        "routes": [
+          {
+            "dst": "0.0.0.0/0"
+          }
+        ],
+        "ranges": [
+          [
+            {
+              "subnet": "10.88.0.0/16",
+              "gateway": "10.88.0.1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "cni-nftables-portmap",
+      "capabilities": {
+        "portMappings": true
+      }
+    },
+    {
+      "type": "cni-nftables-firewall",
+      "forward_chain_name": "forward"
+    }
+  ]
+}
+```
+
+Please note the `ipMasq` key is being set to `false`.
 
 Review network config:
 

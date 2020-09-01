@@ -48,7 +48,7 @@ func addPostRoutingSourceNatRule(v, tableName, chainName string, addr *current.I
 	})
 
 	r.Exprs = append(r.Exprs, &expr.Meta{
-		Key:      expr.MetaKeyOIFNAME,
+		Key:      expr.MetaKeyIIFNAME,
 		Register: 1,
 	})
 	r.Exprs = append(r.Exprs, &expr.Cmp{

@@ -104,6 +104,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					addr.Version,
 					p.filterTableName,
 					chainName,
+					"none", "none", "none",
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating ipv%s filter %s chain: %s",

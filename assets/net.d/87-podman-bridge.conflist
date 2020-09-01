@@ -6,7 +6,7 @@
       "type": "bridge",
       "bridge": "cni-podman0",
       "isGateway": true,
-      "ipMasq": true,
+      "ipMasq": false,
       "ipam": {
         "type": "host-local",
         "routes": [
