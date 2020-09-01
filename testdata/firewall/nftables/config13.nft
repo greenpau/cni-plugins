@@ -1,0 +1,14 @@
+table ip6 filter {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		jump cni-ffw-b651671e0e8ec16f9eb5585
+		log prefix "ip6 forward drop: "
+		counter packets 0 bytes 0 drop
+	}
+
+	chain cni-ffw-b651671e0e8ec16f9eb5585 {
+		oifname "dummy0" ip6 daddr 2001:db8:100:100::1 ct state established,related counter packets 0 bytes 0 accept
+		iifname "dummy0" ip6 saddr 2001:db8:100:100::1 counter packets 0 bytes 0 accept
+		iifname "dummy0" oifname "dummy0" counter packets 0 bytes 0 accept
+	}
+}

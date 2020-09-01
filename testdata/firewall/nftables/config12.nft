@@ -1,0 +1,14 @@
+table ip filter {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		jump cni-ffw-1519ef6592bdc480675bb39
+		log prefix "ip4 forward drop: "
+		counter packets 0 bytes 0 drop
+	}
+
+	chain cni-ffw-1519ef6592bdc480675bb39 {
+		oifname "dummy0" ip daddr 192.168.100.100 ct state established,related counter packets 0 bytes 0 accept
+		iifname "dummy0" ip saddr 192.168.100.100 counter packets 0 bytes 0 accept
+		iifname "dummy0" oifname "dummy0" counter packets 0 bytes 0 accept
+	}
+}
