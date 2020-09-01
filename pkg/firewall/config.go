@@ -12,9 +12,11 @@ import (
 // Config holds the configuration for the Plugin.
 type Config struct {
 	types.NetConf
-	ContainerID      string `json:"-"`
-	FilterTableName  string `json:"filter_table_name"`
-	ForwardChainName string `json:"forward_chain_name"`
+	ContainerID             string `json:"-"`
+	FilterTableName         string `json:"filter_table_name"`
+	ForwardFilterChainName  string `json:"forward_chain_name"`
+	NatTableName            string `json:"nat_table_name"`
+	PostRoutingNatChainName string `json:"postrouting_nat_chain_name"`
 }
 
 func parseConfigFromBytes(data []byte) (*Config, *current.Result, error) {
@@ -33,8 +35,18 @@ func parseConfigFromBytes(data []byte) (*Config, *current.Result, error) {
 	}
 
 	// Default the forwarding chain name to forward
-	if conf.ForwardChainName == "" {
-		conf.ForwardChainName = "forward"
+	if conf.ForwardFilterChainName == "" {
+		conf.ForwardFilterChainName = "forward"
+	}
+
+	// Default the nat table name to nat
+	if conf.NatTableName == "" {
+		conf.NatTableName = "nat"
+	}
+
+	// Default the postrouting chain name to postrouting
+	if conf.PostRoutingNatChainName == "" {
+		conf.PostRoutingNatChainName = "postrouting"
 	}
 
 	// Parse previous result.

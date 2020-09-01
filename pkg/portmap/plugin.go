@@ -218,60 +218,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 	bridgeIntfName := p.interfaceChain[0]
 	nslinkIntfName := p.interfaceChain[1]
 
-	// Add post-routing rules
-	for _, targetInterface := range p.targetInterfaces {
-		for _, addr := range targetInterface.addrs {
-			chainName := utils.GetChainName("npo", conf.ContainerID)
-			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
-			if err != nil {
-				return fmt.Errorf(
-					"failed obtaining ipv%s postrouting %s chain info: %s",
-					addr.Version, chainName, err,
-				)
-			}
-			if !exists {
-				if err := utils.CreateChain(
-					addr.Version,
-					p.natTableName,
-					chainName,
-					"none", "none", "none",
-				); err != nil {
-					return fmt.Errorf(
-						"failed creating ipv%s postrouting %s chain: %s",
-						addr.Version, chainName, err,
-					)
-				}
-			}
-			if err := utils.CreateJumpRule(
-				addr.Version,
-				p.natTableName,
-				p.postRoutingNatChainName,
-				chainName,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating jump rule to ipv%s postrouting %s chain: %s",
-					addr.Version, chainName, err,
-				)
-			}
-
-			if err := utils.AddPostRoutingRules(
-				map[string]interface{}{
-					"version":          addr.Version,
-					"table":            p.natTableName,
-					"chain":            chainName,
-					"bridge_interface": bridgeIntfName,
-					"veth_interface":   nslinkIntfName,
-					"ip_address":       addr,
-				},
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating postrouting rules in ipv%s %s chain of %s table: %s",
-					addr.Version, chainName, p.natTableName, err,
-				)
-			}
-		}
-	}
-
 	// Add pre-routing rules
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
@@ -536,11 +482,11 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 		if !exists {
 			continue
 		}
-		exists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName)
+		exists, err = utils.IsChainExists(v, p.natTableName, p.preRoutingNatChainName)
 		if err != nil {
 			return fmt.Errorf(
-				"failed obtaining ipv%s postrouting chain %s info: %s",
-				v, p.postRoutingNatChainName, err,
+				"failed obtaining ipv%s prerouting chain %s info: %s",
+				v, p.preRoutingNatChainName, err,
 			)
 		}
 		if exists {
@@ -549,8 +495,8 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 					if v != addr.Version {
 						continue
 					}
-					chainName := utils.GetChainName("npo", conf.ContainerID)
-					if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, chainName); err != nil {
+					chainName := utils.GetChainName("npr", conf.ContainerID)
+					if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.preRoutingNatChainName, chainName); err != nil {
 						return err
 					}
 				}
@@ -560,7 +506,7 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
-			chainName := utils.GetChainName("npo", conf.ContainerID)
+			chainName := utils.GetChainName("npr", conf.ContainerID)
 			exists, err := utils.IsChainExists(addr.Version, p.natTableName, chainName)
 			if err != nil {
 				continue
