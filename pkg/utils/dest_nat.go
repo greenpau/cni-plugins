@@ -16,7 +16,6 @@ func AddDestinationNatRules(opts map[string]interface{}) error {
 	tableName := opts["table"].(string)
 	chainName := opts["chain"].(string)
 	bridgeIntfName := opts["bridge_interface"].(string)
-	//nslinkIntfName := opts["veth_interface"].(string)
 	addr := opts["ip_address"].(net.IPNet)
 	pm := opts["port_mapping"].(MappingEntry)
 

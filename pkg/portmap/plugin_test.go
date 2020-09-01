@@ -20,16 +20,22 @@ func TestPlugin(t *testing.T) {
 		shouldErr          bool
 	}{
 		{
-			name: "skips configureing nftables when config has no portMappings",
+			name: "skips configuring nftables when config has no portMappings",
 			path: "testdata/portmap/stdindata/stdindata1.json",
 			//shouldSkip: true,
 			shouldDeleteConfig: false,
 		},
 		{
-			name: "configures nftables to perform destination NAT from host port tcp/46063 to container port 80",
+			name: "configures destination NAT from host port tcp 46063 to container port 80",
 			path: "testdata/portmap/stdindata/stdindata2.json",
 			//shouldSkip: true,
 			shouldDeleteConfig: false,
+		},
+		{
+			name: "configures destination NAT from host port tcp 46063 to container port 80 and cleans afterwards",
+			path: "testdata/portmap/stdindata/stdindata2.json",
+			//shouldSkip: true,
+			shouldDeleteConfig: true,
 		},
 	}
 

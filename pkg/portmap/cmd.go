@@ -5,13 +5,11 @@ import (
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
-	//"github.com/davecgh/go-spew/spew"
 )
 
 // Add initializes an instance of Plugin and adds necessary
 // port mapping rules.
 func Add(args *skel.CmdArgs) error {
-	//return fmt.Errorf("NFT-PORTMAP-ADD: %s", spew.Sdump(args))
 	conf, result, err := parseConfigFromBytes(args.StdinData, args.IfName)
 	if err != nil {
 		return err
@@ -23,10 +21,9 @@ func Add(args *skel.CmdArgs) error {
 		return fmt.Errorf("must be called as chained plugin, missing prevResult from earlier plugin")
 	}
 
-	// TODO: uncomment and deal with it
-	//if len(conf.RuntimeConfig.PortMaps) == 0 {
-	//	return types.PrintResult(conf.PrevResult, conf.CNIVersion)
-	//}
+	if len(conf.RuntimeConfig.PortMaps) == 0 {
+		return types.PrintResult(conf.PrevResult, conf.CNIVersion)
+	}
 
 	p := NewPlugin(conf)
 	if err := p.Add(conf, result); err != nil {
@@ -43,7 +40,6 @@ func Add(args *skel.CmdArgs) error {
 // Check initializes an instance of Plugin and performs
 // necessary checks.
 func Check(args *skel.CmdArgs) error {
-	//return fmt.Errorf("NFT-PORTMAP-CHECK: %s", spew.Sdump(args))
 	conf, result, err := parseConfigFromBytes(args.StdinData, args.IfName)
 	if err != nil {
 		return err
@@ -55,10 +51,10 @@ func Check(args *skel.CmdArgs) error {
 	if conf.PrevResult == nil {
 		return fmt.Errorf("missing prevResult from earlier plugin")
 	}
-	// TODO: uncomment and deal with it
-	//if len(conf.RuntimeConfig.PortMaps) == 0 {
-	//	return nil
-	//}
+
+	if len(conf.RuntimeConfig.PortMaps) == 0 {
+		return nil
+	}
 
 	p := NewPlugin(conf)
 	if err := p.Check(conf, result); err != nil {
@@ -85,10 +81,9 @@ func Delete(args *skel.CmdArgs) error {
 		return fmt.Errorf("missing prevResult from earlier plugin")
 	}
 
-	// TODO: uncomment and deal with it
-	//if len(conf.RuntimeConfig.PortMaps) == 0 {
-	//  return nil
-	//}
+	if len(conf.RuntimeConfig.PortMaps) == 0 {
+		return nil
+	}
 
 	p := NewPlugin(conf)
 	if err := p.Delete(conf, result); err != nil {

@@ -18,56 +18,22 @@ This repository contains the following plugins:
 <!-- begin-markdown-toc -->
 ## Table of Contents
 
+* [Supported Operating Systems](#supported-operating-systems)
 * [Getting Started](#getting-started)
-  * [cni-nftables-firewall](#cninftablesfirewall)
-  * [cni-nftables-portmap](#cninftablesportmap)
-* [Plugin Development](#plugin-development)
-  * [Overview](#overview)
-  * [Integration Testing](#integration-testing)
-    * [cni-nftables-firewall](#cninftablesfirewall-1)
-    * [cni-nftables-portmap](#cninftablesportmap-1)
+* [Miscellaneous](#miscellaneous)
+  * [Known Issues](#known-issues)
 
 <!-- end-markdown-toc -->
 
-## Target Systems
+## Supported Operating Systems
 
 The plugins had been tested on the following systems:
 
-* CentOS 8, kernel version: `4.18.0-193.14.2.el8_2.x86_64`
+* CentOS 8:
+  - kernel version: `4.18.0-193.14.2.el8_2.x86_64`
+  - nftables version `v0.9.3 (Topsy)`
 
 ## Getting Started
-
-### cni-nftables-firewall
-
-The `cni-nftables-firewall` plugin performs the following steps upon
-the "add" operation.
-
-1. If `filter` table (or the one specified by `filter_table_name`) does not
-  exist, it creates it.
-2. If the `forward` chain (or the one specified by `forward_chain_name`)
-  in the `filter` table does not exist, it creates it.
-
-### cni-nftables-portmap
-
-The `cni-nftables-portmap` plugin performs the following steps upon
-the "add" operation.
-
-1. If `nat` table (or the one specified by `nat_table_name`) does not
-   exist, it creates it.
-1. If the `postrouting` chain (or the one specified by `postrouting_chain_name`)
-  in the `nat` table does not exist, it creates it.
-1. If the `prerouting` chain (or the one specified by `prerouting_chain_name`)
-  in the `nat` table does not exist, it creates it.
-
-## Plugin Development
-
-### Overview
-
-The entry point to a plugin is `cmd.go`. The code in the file
-is responsible for the initializing the instances of a plugin
-and triggering `Add()`, `Delete()`, and `Check()` function.
-
-### Integration Testing
 
 First, copy `assets/net.d/87-podman-bridge.conflist` to
 `/etc/cni/net.d/`.
@@ -129,21 +95,16 @@ NAME     VERSION   PLUGINS
 podman   0.4.0     bridge,cni-nftables-portmap,cni-nftables-firewall
 ```
 
-#### cni-nftables-firewall
-
-The following command tests `firewall` plugin by placing
-a container in `podman` network and quering AWS Check IP
-website:
+Next, run the following command to place a container in the previously
+created `podman` network and query AWS Check IP website:
 
 ```bash
 podman run --net=podman -it nicolaka/netshoot curl http://checkip.amazonaws.com/
 ```
 
-#### cni-nftables-portmap
-
-The following command tests `portmap` plugin by placing
-a container in `podman` network and exposing a web server
-in the container.
+Run the following commands to test port-mapping plugin by placing
+a container in `podman` network and exposing a web server in
+the container.
 
 First, start the container:
 
@@ -160,7 +121,7 @@ podman run --net=podman -p 8080:80/tcp -d nginxdemos/hello
 Verify connectivity to the container:
 
 ```bash
-curl -v http://127.0.0.1:8080
+curl -v http://HOST_IP:8080
 ```
 
 ## Miscellaneous
@@ -184,3 +145,5 @@ tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 byt
 
 See similar issue
 [here](https://stackoverflow.com/questions/26716722/tcp-receives-packets-but-it-ignores-them).
+
+The solution is upgrading to nftables v0.9.3 (Topsy).

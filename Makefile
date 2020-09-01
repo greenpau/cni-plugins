@@ -6,11 +6,11 @@ BUILD_USER:=$(shell whoami)
 BUILD_DATE:=$(shell date +"%Y-%m-%d")
 BUILD_GOOS:=$(shell go version | cut -d" " -f4 | cut -d"/" -f1)
 BUILD_GOARCH:=$(shell go version| cut -d" " -f4 | cut -d"/" -f2)
-#PLUGIN_PKGS:="firewall" "portmap"
-PLUGIN_PKGS:="portmap"
+PLUGIN_PKGS:="firewall" "portmap"
+#PLUGIN_PKGS:="portmap"
 #PLUGIN_PKGS:="firewall"
-#PLUGINS:="cni-nftables-firewall" "cni-nftables-portmap"
-PLUGINS:="cni-nftables-portmap"
+PLUGINS:="cni-nftables-firewall" "cni-nftables-portmap"
+#PLUGINS:="cni-nftables-portmap"
 #PLUGINS:="cni-nftables-firewall"
 VERBOSE:=-v
 ifdef TEST

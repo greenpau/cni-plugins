@@ -6,7 +6,6 @@ import (
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/containernetworking/cni/pkg/version"
-	// "github.com/davecgh/go-spew/spew"
 	"github.com/greenpau/cni-plugins/pkg/utils"
 
 	"net"
@@ -40,16 +39,6 @@ type Config struct {
 	FilterTableName         string `json:"filter_table_name"`
 	ForwardFilterChainName  string `json:"forward_filter_chain_name"`
 }
-
-// MappingEntry holds the port mapping configuration.
-/*
-type MappingEntry struct {
-	HostPort      int    `json:"hostPort"`
-	ContainerPort int    `json:"containerPort"`
-	Protocol      string `json:"protocol"`
-	HostIP        string `json:"hostIP,omitempty"`
-}
-*/
 
 // DefaultMarkBit is the default mark bit to signal that
 // masquerading is required.
@@ -161,8 +150,6 @@ func parseConfigFromBytes(data []byte, intfName string) (*Config, *current.Resul
 
 				}
 			}
-
-			//return nil, nil, fmt.Errorf("PARSE: %s", spew.Sdump(ip, result.Interfaces))
 
 			switch ip.Version {
 			case "6":

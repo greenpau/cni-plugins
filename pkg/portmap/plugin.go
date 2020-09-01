@@ -216,7 +216,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 
 	// Set bridge interface name
 	bridgeIntfName := p.interfaceChain[0]
-	nslinkIntfName := p.interfaceChain[1]
 
 	// Add pre-routing rules
 	for _, targetInterface := range p.targetInterfaces {
@@ -277,7 +276,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 						"table":            p.natTableName,
 						"chain":            chainName,
 						"bridge_interface": bridgeIntfName,
-						"veth_interface":   nslinkIntfName,
 						"ip_address":       destAddr,
 						"port_mapping":     pm,
 					},
@@ -295,7 +293,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 							"table":            p.rawTableName,
 							"chain":            p.preRoutingRawChainName,
 							"bridge_interface": bridgeIntfName,
-							"veth_interface":   nslinkIntfName,
 							"ip_address":       destAddr,
 							"port_mapping":     pm,
 						},
