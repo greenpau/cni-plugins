@@ -25,8 +25,8 @@ func init() {
 	app.Description = "CNI Firewall Plugin for nftables"
 	app.Documentation = "https://github.com/greenpau/cni-plugins/"
 	app.SetVersion(appVersion, "1.0.0")
-	app.SetGitBranch(gitBranch, "")
-	app.SetGitCommit(gitCommit, "")
+	app.SetGitBranch(gitBranch, "main")
+	app.SetGitCommit(gitCommit, "8733e0f")
 	app.SetBuildUser(buildUser, "")
 	app.SetBuildDate(buildDate, "")
 }

@@ -1,4 +1,4 @@
-.PHONY: test ctest covdir coverage linter qtest clean dep release info build diagram
+.PHONY: test ctest covdir coverage linter qtest clean dep release info build diagram logo
 APP_VERSION:=$(shell cat VERSION | head -1)
 GIT_COMMIT:=$(shell git describe --dirty --always)
 GIT_BRANCH:=$(shell git rev-parse --abbrev-ref HEAD -- | head -1)
@@ -114,8 +114,7 @@ release:
 	@versioned -patch
 	@git add VERSION
 	@git commit -m 'updated VERSION file'
-	@./bin/$(BINARY) -sync cmd/$(BINARY)/main.go
-	@for PLUGIN in cni-nftables-firewall cni-nftables-portmap;do\
+	@for PLUGIN in $(PLUGINS);do\
 		versioned -sync cmd/$${PLUGIN}/main.go
 	done
 	@echo "Patched version"
@@ -138,3 +137,11 @@ deploy:
 
 diagram:
 	@dot -Tpng assets/diagrams/nft_portmap_plugin.dot -o assets/diagrams/nft_portmap_plugin.png
+
+logo:
+	@mkdir -p assets/docs/images/
+	@gm convert -background black -font Bookman-Demi \
+		-size 640x320 "xc:black" \
+		-draw "fill white gravity center text 0,0 'CNI Plugins\nw/nftables'" \
+		-pointsize 96 \
+		assets/docs/images/logo.png

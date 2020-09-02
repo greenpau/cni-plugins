@@ -35,7 +35,27 @@ The plugins had been tested on the following systems:
 
 ## Getting Started
 
-First, copy `assets/net.d/87-podman-bridge.conflist` to
+First, download the plugins:
+
+```bash
+go get -u github.com/greenpau/cni-plugins/cmd/cni-nftables-portmap
+go get -u github.com/greenpau/cni-plugins/cmd/cni-nftables-firewall
+```
+
+Check the location of the downloaded plugins:
+
+```
+$ which cni-nftables-portmap
+~/dev/go/bin/cni-nftables-portmap
+```
+
+Next, copy the plugins to `/usr/local/lib/cni/` directory.
+
+```bash
+mv ~/dev/go/bin/cni-nftables-{portmap,firewall} /usr/local/lib/cni/
+```
+
+After the above, copy `assets/net.d/87-podman-bridge.conflist` to
 `/etc/cni/net.d/`.
 
 ```bash
