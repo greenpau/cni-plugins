@@ -67,8 +67,6 @@ func Check(args *skel.CmdArgs) error {
 // Delete initializes an instance of Plugin and removes
 // port mapping rules, if any.
 func Delete(args *skel.CmdArgs) error {
-	//return fmt.Errorf("NFT-PORTMAP-DELETE: %s", spew.Sdump(args))
-
 	conf, result, err := parseConfigFromBytes(args.StdinData, args.IfName)
 	if err != nil {
 		return err

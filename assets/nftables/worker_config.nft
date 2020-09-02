@@ -1,0 +1,245 @@
+table arp filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		counter packets 1469 bytes 67520
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		counter packets 1468 bytes 61656
+	}
+}
+table bridge filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		counter packets 33 bytes 3317
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy accept;
+		counter packets 0 bytes 0
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		counter packets 31 bytes 3761
+	}
+}
+table inet filter {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		counter packets 47572 bytes 12203469
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy accept;
+		counter packets 44 bytes 6046
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		counter packets 32924 bytes 4788319
+	}
+}
+table ip filter {
+	set group_rsyslog_nodes {
+		type ipv4_addr
+		flags interval
+		auto-merge
+		elements = { 10.0.0.30, 10.16.16.40 }
+	}
+
+	set group_prom_servers {
+		type ipv4_addr
+		flags interval
+		auto-merge
+		elements = { 10.0.0.10, 10.16.16.20 }
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		udp dport 137-139 counter packets 0 bytes 0 drop
+		tcp dport 139 counter packets 0 bytes 0 drop
+		tcp dport 135 counter packets 0 bytes 0 drop
+		tcp dport 445 counter packets 0 bytes 0 drop
+		udp dport 5355 counter packets 3 bytes 156 drop
+		meta pkttype broadcast counter packets 0 bytes 0 drop
+		meta pkttype multicast counter packets 0 bytes 0 drop
+		ip daddr 255.255.255.255 counter packets 0 bytes 0 drop
+		icmp type echo-request limit rate 5/second accept
+		icmp type echo-request counter packets 0 bytes 0 drop
+		tcp dport 22 accept
+		icmp type { destination-unreachable, router-advertisement, time-exceeded, parameter-problem } accept
+		ip saddr @group_prom_servers tcp dport 9100 accept
+		ip saddr @group_prom_servers tcp dport 9115 accept
+		log prefix "ipv4 input drop: " flags all
+		counter packets 6 bytes 240 drop
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		jump cni-ffw-63c3e8c1c566990c5fc95ad
+		oifname "cni-podman0" ip daddr 10.88.0.22 tcp dport 5201 counter packets 0 bytes 0 accept
+		oifname "cni-podman0" ip daddr 10.88.0.22 tcp dport 80 counter packets 2 bytes 88 accept
+		log prefix "ipv4 forward drop: " flags all
+		counter packets 0 bytes 0 drop
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		counter packets 32924 bytes 4788319
+	}
+
+	chain cni-ffw-63c3e8c1c566990c5fc95ad {
+		oifname "cni-podman0" ip daddr 10.88.0.22 ct state established,related counter packets 22 bytes 3381 accept
+		iifname "cni-podman0" ip saddr 10.88.0.22 counter packets 20 bytes 2577 accept
+		iifname "cni-podman0" oifname "cni-podman0" counter packets 0 bytes 0 accept
+	}
+}
+table ip mangle {
+	chain prerouting {
+		type filter hook prerouting priority mangle; policy accept;
+		counter packets 47625 bytes 12209911
+	}
+
+	chain input {
+		type filter hook input priority mangle; policy accept;
+		counter packets 47581 bytes 12203865
+	}
+
+	chain forward {
+		type filter hook forward priority mangle; policy accept;
+		counter packets 44 bytes 6046
+	}
+
+	chain output {
+		type filter hook output priority mangle; policy accept;
+		counter packets 32924 bytes 4788319
+	}
+
+	chain postrouting {
+		type filter hook postrouting priority mangle; policy accept;
+		counter packets 32971 bytes 4794521
+	}
+}
+table ip nat {
+	chain prerouting {
+		type nat hook prerouting priority dstnat; policy accept;
+		jump cni-npr-63c3e8c1c566990c5fc95ad
+	}
+
+	chain input {
+		type nat hook input priority 100; policy accept;
+		counter packets 0 bytes 0
+	}
+
+	chain output {
+		type nat hook output priority -100; policy accept;
+		counter packets 349 bytes 25655
+	}
+
+	chain postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		jump cni-npo-63c3e8c1c566990c5fc95ad
+		counter packets 351 bytes 25743
+	}
+
+	chain cni-npr-63c3e8c1c566990c5fc95ad {
+		iifname != "cni-podman0" tcp dport 80 dnat to 10.88.0.22:80
+		iifname != "cni-podman0" tcp dport 5201 dnat to 10.88.0.22:5201
+	}
+
+	chain cni-npo-63c3e8c1c566990c5fc95ad {
+		iifname "cni-podman0" ip saddr 10.88.0.22 ip daddr 224.0.0.0/24 counter packets 0 bytes 0 return
+		iifname "cni-podman0" ip saddr 10.88.0.22 ip daddr 255.255.255.255 counter packets 0 bytes 0 return
+		iifname "cni-podman0" ip saddr 10.88.0.22 counter packets 2 bytes 127 masquerade
+	}
+}
+table ip raw {
+	chain prerouting {
+		type filter hook prerouting priority raw; policy accept;
+		counter packets 47625 bytes 12209911
+	}
+
+	chain output {
+		type filter hook output priority raw; policy accept;
+		counter packets 32924 bytes 4788319
+	}
+}
+table ip6 filter {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		icmpv6 type echo-request counter packets 0 bytes 0 drop
+		udp dport 5355 counter packets 0 bytes 0 drop
+		counter packets 0 bytes 0
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		counter packets 0 bytes 0
+	}
+
+	chain output {
+		type filter hook output priority filter; policy drop;
+		counter packets 15686 bytes 753460
+	}
+}
+table ip6 mangle {
+	chain prerouting {
+		type filter hook prerouting priority mangle; policy accept;
+		counter packets 10 bytes 656
+	}
+
+	chain input {
+		type filter hook input priority mangle; policy accept;
+		counter packets 0 bytes 0
+	}
+
+	chain forward {
+		type filter hook forward priority mangle; policy accept;
+		counter packets 0 bytes 0
+	}
+
+	chain output {
+		type filter hook output priority mangle; policy accept;
+		counter packets 15686 bytes 753460
+	}
+
+	chain postrouting {
+		type filter hook postrouting priority mangle; policy accept;
+		counter packets 0 bytes 0
+	}
+}
+table ip6 nat {
+	chain prerouting {
+		type nat hook prerouting priority dstnat; policy accept;
+	}
+
+	chain input {
+		type nat hook input priority 100; policy accept;
+		counter packets 0 bytes 0
+	}
+
+	chain output {
+		type nat hook output priority -100; policy accept;
+		counter packets 0 bytes 0
+	}
+
+	chain postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		counter packets 0 bytes 0
+	}
+}
+table ip6 raw {
+	chain prerouting {
+		type filter hook prerouting priority raw; policy accept;
+		counter packets 10 bytes 656
+	}
+
+	chain output {
+		type filter hook output priority raw; policy accept;
+		counter packets 15686 bytes 753460
+	}
+}

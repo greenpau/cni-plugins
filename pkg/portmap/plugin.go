@@ -308,12 +308,14 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				// bridge interface, e.g. cni-podman0, exists.
 				// If it does not exist, create it.
 				if err := utils.AddFilterForwardMappedPortRules(
-					addr.Version,
-					p.filterTableName,
-					p.forwardFilterChainName,
-					destAddr,
-					bridgeIntfName,
-					pm,
+					map[string]interface{}{
+						"version":          addr.Version,
+						"table":            p.filterTableName,
+						"chain":            p.forwardFilterChainName,
+						"bridge_interface": bridgeIntfName,
+						"ip_address":       destAddr,
+						"port_mapping":     pm,
+					},
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating filter forward mapped port rules in ipv%s %s chain of %s table for %v: %s",
@@ -501,6 +503,8 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 		}
 	}
 
+	bridgeIntfName := p.interfaceChain[0]
+
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
 			chainName := utils.GetChainName("npr", conf.ContainerID)
@@ -513,6 +517,34 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 					return err
 				}
 			}
+
+			var destAddr net.IPNet
+			if addr.Version == "4" {
+				destAddr = conf.ContIPv4
+			} else {
+				destAddr = conf.ContIPv6
+			}
+
+			for _, pm := range conf.RuntimeConfig.PortMaps {
+
+				// Remove filter forwarding rules
+				if err := utils.RemoveFilterForwardMappedPortRules(
+					map[string]interface{}{
+						"version":          addr.Version,
+						"table":            p.filterTableName,
+						"chain":            p.forwardFilterChainName,
+						"bridge_interface": bridgeIntfName,
+						"ip_address":       destAddr,
+						"port_mapping":     pm,
+					},
+				); err != nil {
+					return fmt.Errorf(
+						"failed removing filter forward mapped port rules in ipv%s %s chain of %s table for %v: %s",
+						addr.Version, p.forwardFilterChainName, p.filterTableName, pm, err,
+					)
+				}
+			}
+
 		}
 	}
 

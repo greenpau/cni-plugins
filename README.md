@@ -144,6 +144,10 @@ Verify connectivity to the container:
 curl -v http://HOST_IP:8080
 ```
 
+## Architecture
+
+TBD.
+
 ## Miscellaneous
 
 ### Known Issues
