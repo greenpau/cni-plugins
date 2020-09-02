@@ -115,7 +115,7 @@ release:
 	@git add VERSION
 	@git commit -m 'updated VERSION file'
 	@for PLUGIN in $(PLUGINS);do\
-		versioned -sync cmd/$${PLUGIN}/main.go
+		versioned -sync cmd/$${PLUGIN}/main.go;\
 	done
 	@echo "Patched version"
 	@git add .
