@@ -7,7 +7,8 @@ require (
 	github.com/containernetworking/plugins v0.9.1
 	github.com/google/nftables v0.0.0-20201230142148-715e31cb3c31
 	github.com/greenpau/versioned v1.0.23
+	github.com/mdlayher/netlink v1.4.0 // indirect
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae
-	golang.org/x/sys v0.0.0-20201117170446-d9b008d0a637
+	golang.org/x/sys v0.0.0-20210216163648-f7da38b97c65
 )
