@@ -30,7 +30,7 @@ jobs:
     - name: Setup Environment
       run: |
         mkdir -p /home/runner/.local/bin
-        echo "::add-path::/home/runner/.local/bin"
+        echo "/home/runner/.local/bin" >> $GITHUB_PATH
         mkdir -p .coverage
         echo "*** Current Directory ***"
         pwd

@@ -26,7 +26,7 @@ func init() {
 	app.Documentation = "https://github.com/greenpau/cni-plugins/"
 	app.SetVersion(appVersion, "1.0.4")
 	app.SetGitBranch(gitBranch, "main")
-	app.SetGitCommit(gitCommit, "v1.0.3-2-g67a6724")
+	app.SetGitCommit(gitCommit, "v1.0.4")
 	app.SetBuildUser(buildUser, "")
 	app.SetBuildDate(buildDate, "")
 }
