@@ -2,9 +2,10 @@ package portmap
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/greenpau/cni-plugins/pkg/utils"
-	"net"
 )
 
 // Interface represents a collection of addresses
@@ -258,6 +259,17 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 			); err != nil {
 				return fmt.Errorf(
 					"failed creating jump rule from ipv%s prerouting %s chain: %s",
+					addr.Version, chainName, err,
+				)
+			}
+			if err := utils.CreateJumpRule(
+				addr.Version,
+				p.natTableName,
+				p.outputNatChainName,
+				chainName,
+			); err != nil {
+				return fmt.Errorf(
+					"failed creating jump rule from ipv%s output %s chain: %s",
 					addr.Version, chainName, err,
 				)
 			}
