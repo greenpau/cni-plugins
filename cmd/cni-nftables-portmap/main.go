@@ -24,7 +24,7 @@ func init() {
 	app = versioned.NewPackageManager("cni-nftables-portmap")
 	app.Description = "CNI Port Mapping Plugin for nftables"
 	app.Documentation = "https://github.com/greenpau/cni-plugins/"
-	app.SetVersion(appVersion, "1.0.5")
+	app.SetVersion(appVersion, "1.0.6")
 	app.SetGitBranch(gitBranch, "")
 	app.SetGitCommit(gitCommit, "")
 	app.SetBuildUser(buildUser, "")
