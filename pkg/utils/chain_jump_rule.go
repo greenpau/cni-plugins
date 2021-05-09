@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
 )
@@ -61,32 +63,86 @@ func GetJumpRule(v, tableName, srcChainName, dstChainName string) (*nftables.Rul
 	if err != nil {
 		return nil, err
 	}
-	if chainProps.RuleCount == 0 {
-		return nil, nil
-	}
-
 	for _, r := range chainProps.Rules {
-		if len(r.Exprs) != 1 {
-			continue
+		for _, expression := range r.Exprs {
+			rr, err := expression.(*expr.Verdict)
+
+			if !err {
+				continue
+			}
+			if rr.Kind != expr.VerdictJump {
+				continue
+			}
+			if rr.Chain != dstChainName {
+				continue
+			}
+			return r, nil
 		}
-		rr, err := r.Exprs[0].(*expr.Verdict)
-		if err == false {
-			continue
-		}
-		if rr.Kind != expr.VerdictJump {
-			continue
-		}
-		if rr.Chain != dstChainName {
-			continue
-		}
-		return r, nil
 	}
 
 	return nil, nil
 }
 
+// CreateJumpRuleWithIPSourceMatch create a jump rule from one chain to another that will trigger when source address match ipAddress argument.
+func CreateJumpRuleWithIPSourceMatch(v, tableName, srcChainName, dstChainName string, ipAddress net.IP) error {
+
+	var conditions []expr.Any
+
+	if v == "6" {
+		// payload load 4b @ network header + 16 => reg 1
+		// cmp eq reg 1 0xc8c8a8c0
+		conditions = []expr.Any{
+			&expr.Payload{
+				DestRegister: 1,
+				Base:         expr.PayloadBaseNetworkHeader,
+				Offset:       24,
+				Len:          16,
+			},
+			&expr.Cmp{
+				Op:       expr.CmpOpEq,
+				Register: 1,
+				Data:     ipAddress.To16(),
+			},
+			&expr.Verdict{
+				Kind:  expr.VerdictJump,
+				Chain: dstChainName,
+			},
+		}
+	} else {
+		// payload load 4b @ network header + 16 => reg 1
+		// cmp eq reg 1 0x6464a8c0 ]
+		conditions = []expr.Any{
+			&expr.Payload{
+				DestRegister: 1,
+				Base:         expr.PayloadBaseNetworkHeader,
+				Offset:       16,
+				Len:          4,
+			},
+			&expr.Cmp{
+				Op:       expr.CmpOpEq,
+				Register: 1,
+				Data:     ipAddress.To4(),
+			},
+			&expr.Verdict{
+				Kind:  expr.VerdictJump,
+				Chain: dstChainName,
+			},
+		}
+	}
+	return createJumpRule(v, tableName, srcChainName, dstChainName, conditions)
+}
+
 // CreateJumpRule create a jump rule from one chain to another.
 func CreateJumpRule(v, tableName, srcChainName, dstChainName string) error {
+	return createJumpRule(v, tableName, srcChainName, dstChainName, []expr.Any{
+		&expr.Verdict{
+			Kind:  expr.VerdictJump,
+			Chain: dstChainName,
+		},
+	})
+}
+
+func createJumpRule(v, tableName, srcChainName, dstChainName string, expressions []expr.Any) error {
 	if err := isSupportedIPVersion(v); err != nil {
 		return err
 	}
@@ -121,18 +177,12 @@ func CreateJumpRule(v, tableName, srcChainName, dstChainName string) error {
 	r := &nftables.Rule{
 		Table: tb,
 		Chain: ch,
-		Exprs: []expr.Any{},
+		Exprs: expressions,
 	}
 
 	if chainProps.RuleCount > 0 {
 		r.Position = chainProps.Positions[0]
 	}
-
-	r.Exprs = append(r.Exprs, &expr.Verdict{
-		Kind:  expr.VerdictJump,
-		Chain: dstChainName,
-	})
-
 	if chainProps.RuleCount == 0 {
 		conn.AddRule(r)
 	} else {
@@ -140,7 +190,7 @@ func CreateJumpRule(v, tableName, srcChainName, dstChainName string) error {
 	}
 	if err := conn.Flush(); err != nil {
 		return fmt.Errorf(
-			"failed adding jump rule from chain %s in ipv%s table to chain %s: %s",
+			"failed adding jump rule from chain %s in ipv%s table %s to chain %s: %s",
 			srcChainName, v, tableName, dstChainName, err,
 		)
 	}

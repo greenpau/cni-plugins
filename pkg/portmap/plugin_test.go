@@ -1,14 +1,15 @@
 package portmap
 
 import (
+	"path"
+	"testing"
+
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/greenpau/cni-plugins/pkg/utils"
 	"github.com/vishvananda/netlink"
-	"path"
-	"testing"
 )
 
 func TestPlugin(t *testing.T) {

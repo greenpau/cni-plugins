@@ -11,6 +11,7 @@ table ip nat {
 
 	chain output {
 		type nat hook output priority -100; policy accept;
+		ip daddr 127.0.0.1 jump cni-npr-78f486a1c7999cfe8e0526d
 	}
 
 	chain input {
@@ -18,6 +19,7 @@ table ip nat {
 	}
 
 	chain cni-npo-78f486a1c7999cfe8e0526d {
+		oifname "cni-podman0" ip saddr 127.0.0.1 ip daddr 10.88.0.7 counter packets 0 bytes 0 masquerade
 		iifname "cni-podman0" ip saddr 10.88.0.7 ip daddr 224.0.0.0/24 counter packets 0 bytes 0 return
 		iifname "cni-podman0" ip saddr 10.88.0.7 ip daddr 255.255.255.255 counter packets 0 bytes 0 return
 		iifname "cni-podman0" ip saddr 10.88.0.7 counter packets 0 bytes 0 masquerade
