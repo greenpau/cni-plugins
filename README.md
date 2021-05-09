@@ -18,10 +18,13 @@ This repository contains the following plugins:
 <!-- begin-markdown-toc -->
 ## Table of Contents
 
-* [Supported Operating Systems](#supported-operating-systems)
-* [Getting Started](#getting-started)
-* [Miscellaneous](#miscellaneous)
-  * [Known Issues](#known-issues)
+- [CNI Plugins compatible with nftables](#cni-plugins-compatible-with-nftables)
+  - [Table of Contents](#table-of-contents)
+  - [Supported Operating Systems](#supported-operating-systems)
+  - [Getting Started](#getting-started)
+  - [Architecture](#architecture)
+  - [Miscellaneous](#miscellaneous)
+    - [Known Issues](#known-issues)
 
 <!-- end-markdown-toc -->
 
@@ -142,6 +145,11 @@ Verify connectivity to the container:
 
 ```bash
 curl -v http://HOST_IP:8080
+```
+
+For localhost port mapping to work it is nessesary to set route_localnet sysctl
+```bash
+sysctl -w net.ipv4.conf.all.route_localnet=1
 ```
 
 ## Architecture

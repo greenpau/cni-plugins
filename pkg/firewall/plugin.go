@@ -2,6 +2,7 @@ package firewall
 
 import (
 	"fmt"
+
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/greenpau/cni-plugins/pkg/utils"
 )
@@ -121,15 +122,16 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 
 	// Set bridge interface name
 	bridgeIntfName := p.interfaceChain[0]
+	ffwChain := utils.GetChainName("ffw", conf.ContainerID)
+	npoChain := utils.GetChainName("npo", conf.ContainerID)
 
 	for _, targetInterface := range p.targetInterfaces {
 		for _, addr := range targetInterface.addrs {
-			chainName := utils.GetChainName("ffw", conf.ContainerID)
-			exists, err := utils.IsChainExists(addr.Version, p.filterTableName, chainName)
+			exists, err := utils.IsChainExists(addr.Version, p.filterTableName, ffwChain)
 			if err != nil {
 				return fmt.Errorf(
 					"failed obtaining ipv%s filter %s chain info: %s",
-					addr.Version, chainName, err,
+					addr.Version, ffwChain, err,
 				)
 			}
 
@@ -137,12 +139,12 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				if err := utils.CreateChain(
 					addr.Version,
 					p.filterTableName,
-					chainName,
+					ffwChain,
 					"none", "none", "none",
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating ipv%s filter %s chain: %s",
-						addr.Version, chainName, err,
+						addr.Version, ffwChain, err,
 					)
 				}
 			}
@@ -151,58 +153,65 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				addr.Version,
 				p.filterTableName,
 				p.forwardFilterChainName,
-				chainName,
+				ffwChain,
 			); err != nil {
 				return fmt.Errorf(
 					"failed creating jump rule to ipv%s filter %s chain: %s",
-					addr.Version, chainName, err,
+					addr.Version, ffwChain, err,
 				)
 			}
 
 			if err := utils.AddFilterForwardRules(
 				addr.Version,
 				p.filterTableName,
-				chainName,
+				ffwChain,
 				addr,
 				bridgeIntfName,
 			); err != nil {
 				return fmt.Errorf(
 					"failed creating filter rules in ipv%s %s chain of %s table: %s",
-					addr.Version, chainName, p.filterTableName, err,
+					addr.Version, ffwChain, p.filterTableName, err,
 				)
 			}
 
 			// Add postrouting nat rules
-			chainName = utils.GetChainName("npo", conf.ContainerID)
-			exists, err = utils.IsChainExists(addr.Version, p.natTableName, chainName)
+			exists, err = utils.IsChainExists(addr.Version, p.natTableName, npoChain)
 			if err != nil {
 				return fmt.Errorf(
 					"failed obtaining ipv%s postrouting %s chain info: %s",
-					addr.Version, chainName, err,
+					addr.Version, npoChain, err,
 				)
 			}
 			if !exists {
 				if err := utils.CreateChain(
 					addr.Version,
 					p.natTableName,
-					chainName,
+					npoChain,
 					"none", "none", "none",
 				); err != nil {
 					return fmt.Errorf(
 						"failed creating ipv%s postrouting %s chain: %s",
-						addr.Version, chainName, err,
+						addr.Version, npoChain, err,
 					)
 				}
 			}
-			if err := utils.CreateJumpRule(
-				addr.Version,
-				p.natTableName,
-				p.postRoutingNatChainName,
-				chainName,
-			); err != nil {
+
+			if r, err := utils.GetJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, npoChain); err == nil && r == nil {
+				if err := utils.CreateJumpRule(
+					addr.Version,
+					p.natTableName,
+					p.postRoutingNatChainName,
+					npoChain,
+				); err != nil {
+					return fmt.Errorf(
+						"failed creating jump rule to ipv%s postrouting %s chain: %s",
+						addr.Version, npoChain, err,
+					)
+				}
+			} else if err != nil {
 				return fmt.Errorf(
-					"failed creating jump rule to ipv%s postrouting %s chain: %s",
-					addr.Version, chainName, err,
+					"failed check for jump rule to ipv%s postrouting %s chain: %s",
+					addr.Version, npoChain, err,
 				)
 			}
 
@@ -210,14 +219,14 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				map[string]interface{}{
 					"version":          addr.Version,
 					"table":            p.natTableName,
-					"chain":            chainName,
+					"chain":            npoChain,
 					"bridge_interface": bridgeIntfName,
 					"ip_address":       addr,
 				},
 			); err != nil {
 				return fmt.Errorf(
 					"failed creating postrouting rules in ipv%s %s chain of %s table: %s",
-					addr.Version, chainName, p.natTableName, err,
+					addr.Version, npoChain, p.natTableName, err,
 				)
 			}
 		}
@@ -293,71 +302,88 @@ func (p *Plugin) execCheck(conf *Config, prevResult *current.Result) error {
 }
 
 func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
+	var err error
+	var natTableExists, filterTableExists, forwardFilterChainExists, postRoutingNatChainExists, ffwExsists, npoExists bool
+
 	if err := p.validateInput(prevResult); err != nil {
 		return fmt.Errorf("failed validating input: %s", err)
 	}
 
+	ffwChain := utils.GetChainName("ffw", conf.ContainerID)
+	npoChain := utils.GetChainName("npo", conf.ContainerID)
+
 	for v := range p.targetIPVersions {
-		exists, err := utils.IsTableExist(v, p.filterTableName)
-		if err != nil {
-			return fmt.Errorf("failed obtaining ipv%s filter table %s info: %s", v, p.filterTableName, err)
-		}
-		if !exists {
-			continue
-		}
-		exists, err = utils.IsChainExists(v, p.filterTableName, p.forwardFilterChainName)
-		if err != nil {
+
+		if natTableExists, err = utils.IsTableExist(v, p.natTableName); natTableExists && err == nil {
+			if postRoutingNatChainExists, err = utils.IsChainExists(v, p.natTableName, p.postRoutingNatChainName); err != nil {
+				return fmt.Errorf(
+					"error checking ipv%s postrouting chain %s info: %s",
+					v, p.postRoutingNatChainName, err,
+				)
+			}
+		} else if err != nil {
 			return fmt.Errorf(
-				"failed obtaining ipv%s forward chain %s info: %s",
-				v, p.forwardFilterChainName, err,
+				"error checking ipv%s nat table %s info: %s",
+				v, p.natTableName, err,
 			)
 		}
-		if exists {
-			for _, targetInterface := range p.targetInterfaces {
-				for _, addr := range targetInterface.addrs {
-					if v != addr.Version {
-						continue
-					}
-					chainName := utils.GetChainName("ffw", conf.ContainerID)
-					if err := utils.DeleteJumpRule(addr.Version, p.filterTableName, p.forwardFilterChainName, chainName); err != nil {
-						return err
-					}
-					// delete postrouting nat jump rule
-					chainName = utils.GetChainName("npo", conf.ContainerID)
-					if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, chainName); err != nil {
-						return err
-					}
 
+		if filterTableExists, err = utils.IsTableExist(v, p.filterTableName); filterTableExists && err == nil {
+			if forwardFilterChainExists, err = utils.IsChainExists(v, p.filterTableName, p.forwardFilterChainName); err != nil {
+				return fmt.Errorf(
+					"error checking ipv%s forward filter chain %s info: %s",
+					v, p.forwardFilterChainName, err,
+				)
+			}
+		} else if err != nil {
+			return fmt.Errorf(
+				"error checking ipv%s filter table %s info: %s",
+				v, p.filterTableName, err,
+			)
+		}
+
+		for _, targetInterface := range p.targetInterfaces {
+			for _, addr := range targetInterface.addrs {
+				if v != addr.Version {
+					continue
+				}
+
+				if ffwExsists, err = utils.IsChainExists(addr.Version, p.natTableName, ffwChain); err != nil {
+					return fmt.Errorf(
+						"error checking ipv%s firewall container chain %s info: %s",
+						v, ffwChain, err,
+					)
+				}
+
+				if npoExists, err = utils.IsChainExists(addr.Version, p.natTableName, npoChain); err != nil {
+					return fmt.Errorf(
+						"error checking ipv%s postrouting container chain %s info: %s",
+						v, npoChain, err,
+					)
+				}
+
+				if filterTableExists && ffwExsists {
+					if forwardFilterChainExists {
+						if err := utils.DeleteJumpRule(addr.Version, p.filterTableName, p.forwardFilterChainName, ffwChain); err != nil {
+							return err
+						}
+					}
+					if err := utils.DeleteChain(addr.Version, p.filterTableName, ffwChain); err != nil {
+						return err
+					}
+				}
+				if natTableExists && npoExists {
+					if postRoutingNatChainExists {
+						if err := utils.DeleteJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, npoChain); err != nil {
+							return err
+						}
+					}
+					if err := utils.DeleteChain(addr.Version, p.natTableName, npoChain); err != nil {
+						return err
+					}
 				}
 			}
 		}
 	}
-
-	for _, targetInterface := range p.targetInterfaces {
-		for _, addr := range targetInterface.addrs {
-			chainName := utils.GetChainName("ffw", conf.ContainerID)
-			exists, err := utils.IsChainExists(addr.Version, p.filterTableName, chainName)
-			if err != nil {
-				continue
-			}
-			if exists {
-				if err := utils.DeleteChain(addr.Version, p.filterTableName, chainName); err != nil {
-					return err
-				}
-			}
-			// delete postrouting nat rules
-			chainName = utils.GetChainName("npo", conf.ContainerID)
-			exists, err = utils.IsChainExists(addr.Version, p.natTableName, chainName)
-			if err != nil {
-				continue
-			}
-			if exists {
-				if err := utils.DeleteChain(addr.Version, p.natTableName, chainName); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
 	return nil
 }

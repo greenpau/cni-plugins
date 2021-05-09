@@ -2,10 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/containernetworking/cni/pkg/types/current"
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
-	//"net"
 )
 
 func addPostRoutingSourceNatRule(opts map[string]interface{}) error {
@@ -67,6 +68,79 @@ func addPostRoutingSourceNatRule(opts map[string]interface{}) error {
 	r.Exprs = append(r.Exprs, &expr.Masq{})
 
 	conn.AddRule(r)
+	if err := conn.Flush(); err != nil {
+		return fmt.Errorf(
+			"failed adding source NAT rule in chain %s of ipv%s %s table for %v: %s",
+			chainName, v, tableName, addr, err,
+		)
+	}
+	return nil
+}
+
+// AddPostRoutingSourceNatForLocalnet add rules for masquarading traffic to container
+func AddPostRoutingSourceNatForLocalnet(opts map[string]interface{}) error {
+	v := opts["version"].(string)
+	tableName := opts["table"].(string)
+	chainName := opts["chain"].(string)
+	bridgeIntfName := opts["bridge_interface"].(string)
+	addr := opts["ip_address"].(net.IPNet)
+
+	conn, err := initNftConn()
+	if err != nil {
+		return err
+	}
+
+	tb := &nftables.Table{
+		Name:   tableName,
+		Family: nftables.TableFamilyIPv4,
+	}
+
+	ch := &nftables.Chain{
+		Name:  chainName,
+		Table: tb,
+	}
+
+	if v == "4" {
+		conn.AddRule(
+			&nftables.Rule{
+				Table: tb,
+				Chain: ch,
+				Exprs: []expr.Any{
+					&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
+					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: EncodeInterfaceName(bridgeIntfName)},
+
+					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 12, Len: 4},
+					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: net.ParseIP("127.0.0.1").To4()},
+
+					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 16, Len: 4},
+					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: addr.IP.To4()},
+
+					&expr.Counter{},
+					&expr.Masq{},
+				},
+			},
+		)
+	} else {
+		conn.AddRule(
+			&nftables.Rule{
+				Table: tb,
+				Chain: ch,
+				Exprs: []expr.Any{
+					&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
+					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: EncodeInterfaceName(bridgeIntfName)},
+
+					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 8, Len: 4},
+					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: net.ParseIP("::1").To16()},
+
+					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 24, Len: 4},
+					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: addr.IP.To16()},
+
+					&expr.Counter{},
+					&expr.Masq{},
+				},
+			},
+		)
+	}
 	if err := conn.Flush(); err != nil {
 		return fmt.Errorf(
 			"failed adding source NAT rule in chain %s of ipv%s %s table for %v: %s",
