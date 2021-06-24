@@ -244,6 +244,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 			nprChain := utils.GetChainName("npr", conf.ContainerID)
 			npoChain := utils.GetChainName("npo", conf.ContainerID)
 
+			// Add NPR chain.
 			if exists, err := utils.IsChainExists(addr.Version, p.natTableName, nprChain); !exists && err == nil {
 				if err := utils.CreateChain(
 					addr.Version,
@@ -283,18 +284,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				)
 			}
 
-			if err := utils.CreateJumpRule(
-				addr.Version,
-				p.natTableName,
-				p.preRoutingNatChainName,
-				nprChain,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating jump rule from ipv%s prerouting %s chain: %s",
-					addr.Version, nprChain, err,
-				)
-			}
-
 			if r, err := utils.GetJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, npoChain); err == nil && r == nil {
 				if err := utils.CreateJumpRule(
 					addr.Version,
@@ -314,6 +303,21 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				)
 			}
 
+			// Add an `ip daddr` jump rule to the NAT prerouting chain.
+			if err := utils.CreateJumpRuleWithIPDaddrMatch(
+				addr.Version,
+				p.natTableName,
+				p.preRoutingNatChainName,
+				nprChain,
+				loopbackIP,
+			); err != nil {
+				return fmt.Errorf(
+					"failed creating jump rule from ipv%s prerouting %s chain: %s",
+					addr.Version, nprChain, err,
+				)
+			}
+
+			// Add an `ip daddr` jump rule to the NAT output chain.
 			if err := utils.CreateJumpRuleWithIPDaddrMatch(
 				addr.Version,
 				p.natTableName,
