@@ -83,8 +83,8 @@ func GetJumpRule(v, tableName, srcChainName, dstChainName string) (*nftables.Rul
 	return nil, nil
 }
 
-// CreateJumpRuleWithIPSourceMatch create a jump rule from one chain to another that will trigger when source address match ipAddress argument.
-func CreateJumpRuleWithIPSourceMatch(v, tableName, srcChainName, dstChainName string, ipAddress net.IP) error {
+// CreateJumpRuleWithIPDaddrMatch create a jump rule from one chain to another that will trigger when source address match ipAddress argument.
+func CreateJumpRuleWithIPDaddrMatch(v, tableName, srcChainName, dstChainName string, ipAddress net.IP) error {
 
 	var conditions []expr.Any
 

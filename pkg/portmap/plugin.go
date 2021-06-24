@@ -314,7 +314,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				)
 			}
 
-			if err := utils.CreateJumpRuleWithIPSourceMatch(
+			if err := utils.CreateJumpRuleWithIPDaddrMatch(
 				addr.Version,
 				p.natTableName,
 				p.outputNatChainName,
