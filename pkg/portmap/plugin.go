@@ -231,19 +231,17 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				continue
 			}
 
-			var loopbackIP net.IP
 			var destAddr net.IPNet
 			if addr.Version == "4" {
-				loopbackIP = net.ParseIP("127.0.0.1")
 				destAddr = conf.ContIPv4
 			} else {
-				loopbackIP = net.ParseIP("::1")
 				destAddr = conf.ContIPv6
 			}
 
 			nprChain := utils.GetChainName("npr", conf.ContainerID)
 			npoChain := utils.GetChainName("npo", conf.ContainerID)
 
+			// Add NPR chain.
 			if exists, err := utils.IsChainExists(addr.Version, p.natTableName, nprChain); !exists && err == nil {
 				if err := utils.CreateChain(
 					addr.Version,
@@ -283,18 +281,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				)
 			}
 
-			if err := utils.CreateJumpRule(
-				addr.Version,
-				p.natTableName,
-				p.preRoutingNatChainName,
-				nprChain,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating jump rule from ipv%s prerouting %s chain: %s",
-					addr.Version, nprChain, err,
-				)
-			}
-
 			if r, err := utils.GetJumpRule(addr.Version, p.natTableName, p.postRoutingNatChainName, npoChain); err == nil && r == nil {
 				if err := utils.CreateJumpRule(
 					addr.Version,
@@ -311,19 +297,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				return fmt.Errorf(
 					"failed check for jump rule to ipv%s postrouting %s chain: %s",
 					addr.Version, npoChain, err,
-				)
-			}
-
-			if err := utils.CreateJumpRuleWithIPSourceMatch(
-				addr.Version,
-				p.natTableName,
-				p.outputNatChainName,
-				nprChain,
-				loopbackIP,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating jump rule from ipv%s output %s chain: %s",
-					addr.Version, nprChain, err,
 				)
 			}
 
@@ -364,8 +337,8 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				}
 			}
 
-			// Add postrouting nat rules
-			if err := utils.AddPostRoutingSourceNatForLocalnet(
+			// Add postrouting masquerade into the container bridge network.
+			if err := utils.AddPostRoutingDestNatRule(
 				map[string]interface{}{
 					"version":          addr.Version,
 					"table":            p.natTableName,
@@ -378,6 +351,76 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 					"failed creating postrouting rule for localhost ipv%s %s chain of %s table: %s",
 					addr.Version, p.forwardFilterChainName, p.filterTableName, err,
 				)
+			}
+
+
+			// Loop through local IP addresses for the next two rule
+			// creation functions. The loops are blatently stolen from
+			// https://stackoverflow.com/questions/23558425/how-do-i-get-the-local-ip-address-in-go
+			hostInterfaces, err := net.Interfaces()
+			if err != nil {
+				return fmt.Errorf("Failed to get local interfaces: %s", err)
+			}
+
+			for _, i := range hostInterfaces {
+
+				// Skip the container bridge interface
+				if i.Name == bridgeIntfName {
+					continue
+				}
+
+				hostIPAddrs, err := i.Addrs()
+				if err != nil {
+					return fmt.Errorf(
+						"Failed to get IP addresses for interface %s: %s",
+						i.Name, err,
+					)
+				}
+				for _, hostIPAddr := range hostIPAddrs {
+					var hostAddr net.IP
+					switch foo := hostIPAddr.(type) {
+					case *net.IPNet:
+						hostAddr = foo.IP
+					case *net.IPAddr:
+						hostAddr = foo.IP
+					}
+
+					// Skip IPv6 addresses when working with IPv4, and vice versa.
+					if addr.Version == "4" && hostAddr.To4() == nil {
+						continue
+					}
+					if addr.Version == "6" && hostAddr.To16() == nil {
+					  continue
+					}
+
+					// Add an `ip daddr` jump rule to the NAT prerouting chain.
+					if err := utils.CreateJumpRuleWithIPDaddrMatch(
+						addr.Version,
+						p.natTableName,
+						p.preRoutingNatChainName,
+						nprChain,
+						hostAddr,
+					); err != nil {
+						return fmt.Errorf(
+							"failed creating jump rule from ipv%s prerouting %s chain: %s",
+							addr.Version, nprChain, err,
+						)
+					}
+
+					// Add an `ip daddr` jump rule to the NAT output chain.
+					if err := utils.CreateJumpRuleWithIPDaddrMatch(
+						addr.Version,
+						p.natTableName,
+						p.outputNatChainName,
+						nprChain,
+						hostAddr,
+					); err != nil {
+						return fmt.Errorf(
+							"failed creating jump rule from ipv%s output %s chain: %s",
+							addr.Version, nprChain, err,
+						)
+					}
+				}
 			}
 		}
 	}
