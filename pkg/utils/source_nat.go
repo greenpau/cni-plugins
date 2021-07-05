@@ -9,6 +9,9 @@ import (
 	"github.com/google/nftables/expr"
 )
 
+// Add rules for masquarading traffic coming out of the conteiner. The
+// resulting rule looks like
+// iifname "<bridgeIntfName>" ip saddr <addr> counter masquerade
 func addPostRoutingSourceNatRule(opts map[string]interface{}) error {
 	v := opts["version"].(string)
 	tableName := opts["table"].(string)
