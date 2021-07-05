@@ -337,8 +337,8 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				}
 			}
 
-			// Add postrouting nat rules
-			if err := utils.AddPostRoutingSourceNatForLocalnet(
+			// Add postrouting masquerade into the container bridge network.
+			if err := utils.AddPostRoutingDestNatRule(
 				map[string]interface{}{
 					"version":          addr.Version,
 					"table":            p.natTableName,
@@ -418,23 +418,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 						return fmt.Errorf(
 							"failed creating jump rule from ipv%s output %s chain: %s",
 							addr.Version, nprChain, err,
-						)
-					}
-
-					// Add an `oifname` masquarade rule to npoChain.
-					if err := utils.AddPostRoutingDestNatRule(
-						map[string]interface{}{
-							"version":          addr.Version,
-							"table":            p.natTableName,
-							"chain":            npoChain,
-							"bridge_interface": bridgeIntfName,
-							"src_address":      hostAddr,
-							"dest_address":     destAddr,
-						},
-					); err != nil {
-						return fmt.Errorf(
-							"failed creating postrouting rule for localhost ipv%s %s chain of %s table: %s",
-							addr.Version, p.forwardFilterChainName, p.filterTableName, err,
 						)
 					}
 				}

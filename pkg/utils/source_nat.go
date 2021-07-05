@@ -80,8 +80,10 @@ func addPostRoutingSourceNatRule(opts map[string]interface{}) error {
 	return nil
 }
 
-// AddPostRoutingSourceNatForLocalnet add rules for masquarading traffic to container
-func AddPostRoutingSourceNatForLocalnet(opts map[string]interface{}) error {
+// Add rules for masquarading traffic into the container. The resulting
+// rule looks like
+// oifname "<bridgeIntfName>" ip daddr <addr> counter masquerade
+func AddPostRoutingDestNatRule(opts map[string]interface{}) error {
 	v := opts["version"].(string)
 	tableName := opts["table"].(string)
 	chainName := opts["chain"].(string)
@@ -112,9 +114,6 @@ func AddPostRoutingSourceNatForLocalnet(opts map[string]interface{}) error {
 					&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
 					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: EncodeInterfaceName(bridgeIntfName)},
 
-					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 12, Len: 4},
-					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: net.ParseIP("127.0.0.1").To4()},
-
 					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 16, Len: 4},
 					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: addr.IP.To4()},
 
@@ -131,9 +130,6 @@ func AddPostRoutingSourceNatForLocalnet(opts map[string]interface{}) error {
 				Exprs: []expr.Any{
 					&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
 					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: EncodeInterfaceName(bridgeIntfName)},
-
-					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 8, Len: 4},
-					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: net.ParseIP("::1").To16()},
 
 					&expr.Payload{DestRegister: 1, Base: expr.PayloadBaseNetworkHeader, Offset: 24, Len: 4},
 					&expr.Cmp{Op: expr.CmpOpEq, Register: 1, Data: addr.IP.To16()},
