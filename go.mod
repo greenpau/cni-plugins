@@ -10,5 +10,6 @@ require (
 	github.com/mdlayher/netlink v1.4.0 // indirect
 	github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae
-	golang.org/x/sys v0.0.0-20210216163648-f7da38b97c65
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 )
