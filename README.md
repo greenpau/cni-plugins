@@ -147,10 +147,31 @@ Verify connectivity to the container:
 curl -v http://HOST_IP:8080
 ```
 
-For localhost port mapping to work it is nessesary to set route_localnet sysctl
+For localhost port mapping to work it is necessary to set route_localnet sysctl
 ```bash
 sysctl -w net.ipv4.conf.all.route_localnet=1
 ```
+
+Also, don't limit your sending and receiving of 127.0.0.1 to the `lo`
+interface.
+
+```
+nft add rule filter input iifname != 'lo' ip saddr 127.0.0.0/8 counter drop
+nft add rule filter input iifname != 'lo' ip daddr 127.0.0.0/8 counter drop
+```
+
+This will block communication between the localhost and the container
+network. Instead, match the physical interfaces explicitly, like this.
+
+```
+nft add rule filter input iifname eth0 ip saddr 127.0.0.0/8 counter drop
+nft add rule filter input iifname eth0 ip daddr 127.0.0.0/8 counter drop
+nft add rule filter input iifname eth1 ip saddr 127.0.0.0/8 counter drop
+nft add rule filter input iifname eth1 ip daddr 127.0.0.0/8 counter drop
+```
+
+This allows the container network to communicate with localhost.
+
 
 ## Architecture
 
