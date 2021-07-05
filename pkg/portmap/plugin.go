@@ -231,13 +231,10 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				continue
 			}
 
-			var loopbackIP net.IP
 			var destAddr net.IPNet
 			if addr.Version == "4" {
-				loopbackIP = net.ParseIP("127.0.0.1")
 				destAddr = conf.ContIPv4
 			} else {
-				loopbackIP = net.ParseIP("::1")
 				destAddr = conf.ContIPv6
 			}
 
@@ -300,34 +297,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				return fmt.Errorf(
 					"failed check for jump rule to ipv%s postrouting %s chain: %s",
 					addr.Version, npoChain, err,
-				)
-			}
-
-			// Add an `ip daddr` jump rule to the NAT prerouting chain.
-			if err := utils.CreateJumpRuleWithIPDaddrMatch(
-				addr.Version,
-				p.natTableName,
-				p.preRoutingNatChainName,
-				nprChain,
-				loopbackIP,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating jump rule from ipv%s prerouting %s chain: %s",
-					addr.Version, nprChain, err,
-				)
-			}
-
-			// Add an `ip daddr` jump rule to the NAT output chain.
-			if err := utils.CreateJumpRuleWithIPDaddrMatch(
-				addr.Version,
-				p.natTableName,
-				p.outputNatChainName,
-				nprChain,
-				loopbackIP,
-			); err != nil {
-				return fmt.Errorf(
-					"failed creating jump rule from ipv%s output %s chain: %s",
-					addr.Version, nprChain, err,
 				)
 			}
 
