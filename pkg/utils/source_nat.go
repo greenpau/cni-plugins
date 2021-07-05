@@ -80,8 +80,8 @@ func addPostRoutingSourceNatRule(opts map[string]interface{}) error {
 	return nil
 }
 
-// Add rules for masquarading traffic into the container. The resulting
-// rule looks like
+// AddPostRoutingDestNatRule adds a rule for masquarading traffic into
+// the container. The resulting rule looks like
 // oifname "<bridgeIntfName>" ip daddr <addr> counter masquerade
 func AddPostRoutingDestNatRule(opts map[string]interface{}) error {
 	v := opts["version"].(string)
