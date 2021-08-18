@@ -348,7 +348,7 @@ func (p *Plugin) execDelete(conf *Config, prevResult *current.Result) error {
 					continue
 				}
 
-				if ffwExsists, err = utils.IsChainExists(addr.Version, p.natTableName, ffwChain); err != nil {
+				if ffwExsists, err = utils.IsChainExists(addr.Version, p.filterTableName, ffwChain); err != nil {
 					return fmt.Errorf(
 						"error checking ipv%s firewall container chain %s info: %s",
 						v, ffwChain, err,
