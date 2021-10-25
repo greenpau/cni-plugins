@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 )
 
 // AddFilterForwardRules adds a set of rules in forwarding chain of filter table.

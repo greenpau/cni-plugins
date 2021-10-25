@@ -2,7 +2,7 @@ package portmap
 
 import (
 	"fmt"
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 )
 
 func (p *Plugin) validateInput(conf *Config, result *current.Result) error {

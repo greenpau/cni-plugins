@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
 )

@@ -2,7 +2,7 @@ package firewall
 
 import (
 	"fmt"
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 )
 
 func (p *Plugin) validateInput(result *current.Result) error {

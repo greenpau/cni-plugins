@@ -3,7 +3,7 @@ package firewall
 import (
 	"fmt"
 
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 	"github.com/greenpau/cni-plugins/pkg/utils"
 )
 

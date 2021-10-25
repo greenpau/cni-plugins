@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 	"github.com/greenpau/cni-plugins/pkg/utils"
 )
 
@@ -353,7 +353,6 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 				)
 			}
 
-
 			// Loop through local IP addresses for the next two rule
 			// creation functions. The loops are blatently stolen from
 			// https://stackoverflow.com/questions/23558425/how-do-i-get-the-local-ip-address-in-go
@@ -390,7 +389,7 @@ func (p *Plugin) execAdd(conf *Config, prevResult *current.Result) error {
 						continue
 					}
 					if addr.Version == "6" && hostAddr.To16() == nil {
-					  continue
+						continue
 					}
 
 					// Add an `ip daddr` jump rule to the NAT prerouting chain.
