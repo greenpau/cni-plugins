@@ -41,8 +41,8 @@ The plugins had been tested on the following systems:
 First, download the plugins:
 
 ```bash
-go get -u github.com/greenpau/cni-plugins/cmd/cni-nftables-portmap
-go get -u github.com/greenpau/cni-plugins/cmd/cni-nftables-firewall
+go get -u github.com/greenpau/cni-plugins/cmd/cni-nftables-portmap@latest
+go get -u github.com/greenpau/cni-plugins/cmd/cni-nftables-firewall@latest
 ```
 
 Check the location of the downloaded plugins:
