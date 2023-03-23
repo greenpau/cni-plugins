@@ -76,7 +76,7 @@ test: linter
 	done
 
 ctest: covdir linter
-	@richgo version || go get -u github.com/kyoh86/richgo
+	@richgo version || go install github.com/kyoh86/richgo@latest
 	@time richgo test $(VERBOSE) $(TEST) -coverprofile=.coverage/coverage.out ./*.go
 
 covdir:
@@ -102,8 +102,8 @@ qtest:
 
 dep:
 	@echo "Making dependencies check ..."
-	@go get -u golang.org/x/lint/golint
-	@go get -u github.com/greenpau/versioned/cmd/versioned
+	@go install golang.org/x/lint/golint@latest
+	@go install github.com/greenpau/versioned/cmd/versioned@latest
 
 release:
 	@echo "Making release"
