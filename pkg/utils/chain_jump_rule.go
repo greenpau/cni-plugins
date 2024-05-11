@@ -83,19 +83,13 @@ func GetJumpRule(v, tableName, srcChainName, dstChainName string) (*nftables.Rul
 	return nil, nil
 }
 
-// CreateJumpRuleWithIPDaddrMatch creates a jump rule from one chain to
-// another that will trigger when the destination IP address is one
-// handled by the local system. The resulting rule will be placed in
-// <srcChainName> and look like
-// "ip daddr <ipAddress> jump <dstChainName>"
-func CreateJumpRuleWithIPDaddrMatch(v, tableName, srcChainName, dstChainName string, ipAddress net.IP) error {
-
-	var conditions []expr.Any
-
+// IPDaddrMatch returns the nftables exprs required for matching the provided
+// IPv4 or IPv6 address as destination address.
+func IPDaddrMatch(v string, ipAddress net.IP) []expr.Any {
 	if v == "6" {
 		// payload load 4b @ network header + 16 => reg 1
 		// cmp eq reg 1 0xc8c8a8c0
-		conditions = []expr.Any{
+		return []expr.Any{
 			&expr.Payload{
 				DestRegister: 1,
 				Base:         expr.PayloadBaseNetworkHeader,
@@ -107,32 +101,38 @@ func CreateJumpRuleWithIPDaddrMatch(v, tableName, srcChainName, dstChainName str
 				Register: 1,
 				Data:     ipAddress.To16(),
 			},
-			&expr.Verdict{
-				Kind:  expr.VerdictJump,
-				Chain: dstChainName,
-			},
-		}
-	} else {
-		// payload load 4b @ network header + 16 => reg 1
-		// cmp eq reg 1 0x6464a8c0 ]
-		conditions = []expr.Any{
-			&expr.Payload{
-				DestRegister: 1,
-				Base:         expr.PayloadBaseNetworkHeader,
-				Offset:       16,
-				Len:          4,
-			},
-			&expr.Cmp{
-				Op:       expr.CmpOpEq,
-				Register: 1,
-				Data:     ipAddress.To4(),
-			},
-			&expr.Verdict{
-				Kind:  expr.VerdictJump,
-				Chain: dstChainName,
-			},
 		}
 	}
+	// payload load 4b @ network header + 16 => reg 1
+	// cmp eq reg 1 0x6464a8c0 ]
+	return []expr.Any{
+		&expr.Payload{
+			DestRegister: 1,
+			Base:         expr.PayloadBaseNetworkHeader,
+			Offset:       16,
+			Len:          4,
+		},
+		&expr.Cmp{
+			Op:       expr.CmpOpEq,
+			Register: 1,
+			Data:     ipAddress.To4(),
+		},
+	}
+}
+
+// CreateJumpRuleWithIPDaddrMatch creates a jump rule from one chain to
+// another that will trigger when the destination IP address is one
+// handled by the local system. The resulting rule will be placed in
+// <srcChainName> and look like
+// "ip daddr <ipAddress> jump <dstChainName>"
+func CreateJumpRuleWithIPDaddrMatch(v, tableName, srcChainName, dstChainName string, ipAddress net.IP) error {
+
+	conditions := IPDaddrMatch(v, ipAddress)
+	conditions = append(conditions, &expr.Verdict{
+		Kind:  expr.VerdictJump,
+		Chain: dstChainName,
+	})
+
 	return createJumpRule(v, tableName, srcChainName, dstChainName, conditions)
 }
 

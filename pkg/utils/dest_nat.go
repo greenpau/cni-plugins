@@ -62,6 +62,11 @@ func AddDestinationNatRules(opts map[string]interface{}) error {
 		Data:     EncodeInterfaceName(bridgeIntfName),
 	})
 
+	// match host IP, if specified
+	if hostIP := net.ParseIP(pm.HostIP); hostIP != nil {
+		r.Exprs = append(r.Exprs, IPDaddrMatch(v, hostIP)...)
+	}
+
 	// match port
 
 	r.Exprs = append(r.Exprs, &expr.Meta{
